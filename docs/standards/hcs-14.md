@@ -55,6 +55,7 @@ Last-Call-Ends: (TBD)
       - [Test Vector 2: A2A Agent](#test-vector-2-a2a-agent)
     - [Implementation Requirements](#implementation-requirements)
     - [UAID DID Resolution Profile](#uaid-did-resolution-profile)
+    - [AID Resolution Profile (Web & DNS](#aid-resolution-profile-web--dns)
   - [Security Considerations](#security-considerations)
   - [Trust and Reputation (Informative)](#trust-and-reputation-informative)
   - [Traceability (Informative)](#traceability-informative)
@@ -764,6 +765,52 @@ Conformant resolvers shall return a DID Document satisfying the following minima
 - `service`: zero or more entries advertising routable endpoints derived from declared protocol(s); recommended types include `A2AService`, `MCPService`, and `HCS10Service` with HTTP(S), gRPC, WS, or DIDComm URIs as appropriate.
 
 Resolvers may include `alsoKnownAs` links to protocol‑specific DIDs (e.g., `did:pkh`, `did:ethr`, `did:web`) to optimize federation with ToIP trust frameworks.
+
+### AID Resolution Profile (Web & DNS)
+
+When a uAID `nativeId` represents a standard domain name (FQDN) and is not a blockchain-specific identifier (e.g., CAIP-10), implementations **SHOULD** utilize the Agent Identity & Discovery (AID) standard to locate and verify the active endpoint.
+
+This profile creates a "Discovery-to-Verification" loop, leveraging DNS for routing and uAID for identity.
+
+#### 1. Resolution Logic
+
+Resolvers implementing this profile shall perform the following steps:
+
+1.  **AID Lookup**: Query the DNS TXT record at `_agent.<nativeId>` (e.g., `_agent.api.lifie.ai`) following the AID v1.1.0 specification.
+2.  **Protocol Precedence**: If an AID record is found, the protocol declared in the `p=` (or `proto=`) tag takes precedence over cached protocol hints.
+3.  **Endpoint Extraction**: Extract the URI from the AID `u=` tag to establish the connection.
+4.  **Fallback**: If the AID DNS lookup returns no record (`ERR_NO_RECORD`), the resolver **SHOULD** proceed with standard protocol-specific discovery (e.g., fetching `/.well-known/agent-card.json` for A2A or `agent.json` for legacy implementations) directly from the `nativeId` host.
+
+#### 2. Verification Levels
+
+Resolvers **SHOULD** support two levels of verification based on the data available in the AID record:
+
+**Level 1: Standard Verification (Metadata Match)**
+* **Trigger**: AID record contains `u=` (URI) but no `k=` (Public Key).
+* **Method**: The resolver fetches the agent's canonical metadata (e.g., `agent.json` or HCS-11 Profile) from the resolved URI. It then re-computes the uAID hash from this metadata and confirms it matches the uAID string.
+* **Trust Model**: Relies on TLS (HTTPS) security and DNS integrity.
+
+**Level 2: Enhanced Verification (Cryptographic Proof)**
+* **Trigger**: AID record contains the `k=` (Multibase Ed25519 Public Key) field.
+* **Method**:
+    1.  **Handshake**: The resolver performs the **AID PKA Handshake** (as defined in AID Spec Appendix D). The agent server signs the HTTP response using its private key.
+    2.  **Validation**: The resolver verifies the signature against the `k=` key found in the DNS.
+* **Benefit**: This cryptographically proves that the active endpoint is authorized by the `nativeId` domain owner, effectively binding the uAID identity to the server infrastructure.
+
+#### 3. Example Resolution Flow
+
+**Input:**
+`uaid:aid:7bU8...;uid=tupperware;registry=a2a-registry;proto=a2a;nativeId=api.lifie.ai`
+
+**Execution:**
+1.  **Resolver** queries TXT `_agent.api.lifie.ai`.
+2.  **DNS returns**:
+    `v=aid1; p=a2a; u=https://api.lifie.ai/v1/agent; k=z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK; i=key1`
+3.  **Resolver** connects to `https://api.lifie.ai/v1/agent`.
+4.  **Verification**:
+    * **PKA**: Resolver challenges the server using the handshake protocol, validates the signature against the key `z6MkhaXg...` found in DNS.
+    * **Identity**: Resolver fetches metadata and confirms it hashes to `7bU8...`.
+
 
 ## Security Considerations
 
