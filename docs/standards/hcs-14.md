@@ -768,7 +768,7 @@ Resolvers may include `alsoKnownAs` links to protocol‑specific DIDs (e.g., `di
 
 ### AID Resolution Profile (Web & DNS)
 
-When a uAID `nativeId` represents a standard domain name (FQDN) and is not a blockchain-specific identifier (e.g., CAIP-10), implementations **SHOULD** utilize the Agent Identity & Discovery (AID) standard to locate and verify the active endpoint.
+When a uAID `nativeId` represents a standard domain name (FQDN) and is not a blockchain-specific identifier (e.g., CAIP-10), implementations **SHOULD** utilize the [Agent Identity & Discovery (AID)](https://aid.agentcommunity.org/) standard to locate and verify the active endpoint.
 
 This profile creates a "Discovery-to-Verification" loop, leveraging DNS for routing and uAID for identity.
 
