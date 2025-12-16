@@ -58,3 +58,11 @@ Reference implementations live in the Hashgraph Online Standards SDK:
 ## Governance
 
 Editors and maintainers are listed in `MAINTAINERS.md`. CODEOWNERS are defined in `CODEOWNERS`.
+
+## Code of Conduct
+
+This project is governed by the Contributor Covenant Code of Conduct. By participating, you are expected to uphold this code of conduct.
+
+## License
+
+Apache License 2.0
