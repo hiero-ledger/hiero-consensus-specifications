@@ -1,0 +1,8 @@
+{
+  "label": "HCS-12: HashLinks",
+  "position": 12,
+  "link": {
+    "type": "doc",
+    "id": "standards/hcs-12/index"
+  }
+}

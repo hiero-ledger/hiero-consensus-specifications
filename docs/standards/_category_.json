@@ -1,0 +1,9 @@
+{
+    "label": "Standards",
+    "position": 1,
+    "collapsible": true,
+    "link": {
+      "type": "doc",
+      "id": "standards/index"
+    }
+  }
