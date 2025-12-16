@@ -1,0 +1,45 @@
+name: Sync Labels
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/labels.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = [
+              { name: "type:proposal", color: "1d76db", description: "New proposal or change request for an HCS spec" },
+              { name: "type:review-notes", color: "5319e7", description: "Structured review notes for a proposal/spec" },
+              { name: "status:triage", color: "fbca04", description: "Needs initial maintainer triage" },
+              { name: "status:needs-review", color: "0e8a16", description: "Ready for review" },
+              { name: "status:draft", color: "cfd3d7", description: "Draft work in progress" },
+              { name: "status:blocked", color: "b60205", description: "Blocked by an external dependency or decision" },
+              { name: "status:accepted", color: "0e8a16", description: "Accepted" },
+              { name: "status:rejected", color: "d93f0b", description: "Rejected" },
+            ];
+
+            const { owner, repo } = context.repo;
+
+            for (const label of labels) {
+              try {
+                await github.rest.issues.getLabel({ owner, repo, name: label.name });
+                await github.rest.issues.updateLabel({ owner, repo, name: label.name, color: label.color, description: label.description });
+              } catch (error) {
+                if (error.status === 404) {
+                  await github.rest.issues.createLabel({ owner, repo, name: label.name, color: label.color, description: label.description });
+                  continue;
+                }
+                throw error;
+              }
+            }
