@@ -54,8 +54,12 @@ Last-Call-Ends: (TBD)
       - [Test Vector 1: HCS-10 Agent](#test-vector-1-hcs-10-agent)
       - [Test Vector 2: A2A Agent](#test-vector-2-a2a-agent)
     - [Implementation Requirements](#implementation-requirements)
-    - [UAID DID Resolution Profile](#uaid-did-resolution-profile)
-    - [AID Resolution Profile (Web & DNS](#aid-resolution-profile-web--dns)
+  - [Profiles](#profiles)
+    - [Profile Registry](#profile-registry)
+    - [Profile Conformance](#profile-conformance)
+    - [Profile ID and Versioning](#profile-id-and-versioning)
+    - [Core Resolver Contract](#core-resolver-contract-informative)
+- [Known Profiles](#known-profiles-informative)
   - [Security Considerations](#security-considerations)
   - [Trust and Reputation (Informative)](#trust-and-reputation-informative)
   - [Traceability (Informative)](#traceability-informative)
@@ -756,60 +760,72 @@ Determinism and Collisions (AID): AID identifiers are deterministic by design. I
 
 Change management and traceability: Any change to the six canonical fields shall result in a new AID. UAIDs change only when the underlying sovereign DID changes. Implementations should maintain linkage between prior and new identifiers (for example, via DID Document `alsoKnownAs` entries or a custom relation), and may record state transitions or operational history in HCS‑11 profile documents and/or HCS‑19 audit topics.
 
-### UAID DID Resolution Profile
+## Profiles
 
-Conformant resolvers shall return a DID Document satisfying the following minimal profile:
+HCS-14 defines a stable, protocol-neutral identifier format and deterministic generation rules. Integration-specific discovery and verification mechanisms are defined as **Profiles**.
 
-- `id`: the identifier of the subject (uaid:aid or uaid:did).
-- `verificationMethod`: zero or more entries binding the UAID to cryptographic material when available (e.g., Ed25519 public key for `hcs-10`, EVM account for CAIP‑10 identifiers), referenced from `authentication` and/or `assertionMethod`.
-- `service`: zero or more entries advertising routable endpoints derived from declared protocol(s); recommended types include `A2AService`, `MCPService`, and `HCS10Service` with HTTP(S), gRPC, WS, or DIDComm URIs as appropriate.
+A Profile is a separately versioned specification that describes how to:
+- discover endpoints or metadata for a UAID/AID in a particular environment (DNS, well-known HTTP paths, DID methods, registries, etc.), and/or
+- verify bindings (metadata match, cryptographic proof, attestations).
 
-Resolvers may include `alsoKnownAs` links to protocol‑specific DIDs (e.g., `did:pkh`, `did:ethr`, `did:web`) to optimize federation with ToIP trust frameworks.
+This design allows multiple integration mechanisms to coexist without the HCS-14 core standard selecting or privileging any single approach.
 
-### AID Resolution Profile (Web & DNS)
+### Profile Registry
 
-When a uAID `nativeId` represents a standard domain name (FQDN) and is not a blockchain-specific identifier (e.g., CAIP-10), implementations **SHOULD** utilize the [Agent Identity & Discovery (AID)](https://aid.agentcommunity.org/) standard to locate and verify the active endpoint.
+HCS-14 Profiles are listed in the Profile Registry:
 
-This profile creates a "Discovery-to-Verification" loop, leveraging DNS for routing and uAID for identity.
+- `docs/standards/hcs-14/registry.md`
 
-#### 1. Resolution Logic
+The registry enumerates profiles by Profile ID, status, version, and specification path. The registry MAY include additional non-normative notes such as known implementations or test suites.
 
-Resolvers implementing this profile shall perform the following steps:
+### Profile Conformance
 
-1.  **AID Lookup**: Query the DNS TXT record at `_agent.<nativeId>` (e.g., `_agent.api.lifie.ai`) following the AID v1.1.0 specification.
-2.  **Protocol Precedence**: If an AID record is found, the protocol declared in the `p=` (or `proto=`) tag takes precedence over cached protocol hints.
-3.  **Endpoint Extraction**: Extract the URI from the AID `u=` tag to establish the connection.
-4.  **Fallback**: If the AID DNS lookup returns no record (`ERR_NO_RECORD`), the resolver **SHOULD** proceed with standard protocol-specific discovery (e.g., fetching `/.well-known/agent-card.json` for A2A or `agent.json` for legacy implementations) directly from the `nativeId` host.
+Implementations MAY support zero or more profiles.
 
-#### 2. Verification Levels
+If an implementation claims support for a given profile, it MUST implement all normative requirements in that profile, and it MUST report profile support in a machine-readable way where possible (for example, in a resolver capability response, software metadata, or documentation).
 
-Resolvers **SHOULD** support two levels of verification based on the data available in the AID record:
+HCS-14 core does not require any specific profile.
 
-**Level 1: Standard Verification (Metadata Match)**
-* **Trigger**: AID record contains `u=` (URI) but no `k=` (Public Key).
-* **Method**: The resolver fetches the agent's canonical metadata (e.g., `agent.json` or HCS-11 Profile) from the resolved URI. It then re-computes the uAID hash from this metadata and confirms it matches the uAID string.
-* **Trust Model**: Relies on TLS (HTTPS) security and DNS integrity.
+### Profile ID and Versioning
 
-**Level 2: Enhanced Verification (Cryptographic Proof)**
-* **Trigger**: AID record contains the `k=` (Multibase Ed25519 Public Key) field.
-* **Method**:
-    1.  **Handshake**: The resolver performs the **AID PKA Handshake** (as defined in AID Spec Appendix D). The agent server signs the HTTP response using its private key.
-    2.  **Validation**: The resolver verifies the signature against the `k=` key found in the DNS.
-* **Benefit**: This cryptographically proves that the active endpoint is authorized by the `nativeId` domain owner, effectively binding the uAID identity to the server infrastructure.
+Each profile MUST define:
+- **Profile ID**: a stable, namespaced identifier (recommended format: `hcs-14.profile.<name>`).
+- **Status**: one of `experimental`, `draft`, `recommended`, or `deprecated`.
+- **Version**: semantic versioning (e.g., `0.1.0`, `1.0.0`).
 
-#### 3. Example Resolution Flow
+Profiles MUST be backwards compatible within a major version, unless the profile explicitly states a breaking change and increments the major version.
 
-**Input:**
-`uaid:aid:7bU8...;uid=tupperware;registry=a2a-registry;proto=a2a;nativeId=api.lifie.ai`
+### Core Resolver Contract (Informative)
 
-**Execution:**
-1.  **Resolver** queries TXT `_agent.api.lifie.ai`.
-2.  **DNS returns**:
-    `v=aid1; p=a2a; u=https://api.lifie.ai/v1/agent; k=z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK; i=key1`
-3.  **Resolver** connects to `https://api.lifie.ai/v1/agent`.
-4.  **Verification**:
-    * **PKA**: Resolver challenges the server using the handshake protocol, validates the signature against the key `z6MkhaXg...` found in DNS.
-    * **Identity**: Resolver fetches metadata and confirms it hashes to `7bU8...`.
+HCS-14 core defines identifiers and deterministic AID generation, but does not mandate a single universal resolution mechanism.
+
+A conformant resolver SHOULD expose a single abstract operation:
+
+- **Input**: a UAID (`uaid:aid:...` or `uaid:did:...`)
+- **Output**: a result containing:
+  - `id` (the UAID),
+  - `resolved` (boolean),
+  - `document` (optional DID Document or equivalent structured descriptor),
+  - `service` entries (optional endpoints),
+  - `verification` (optional result metadata describing what was verified and at what assurance),
+  - `errors` (optional structured errors).
+
+Profiles specify how a resolver populates these fields for a given mechanism.
+
+### Known Profiles (Informative)
+
+The following profiles are expected to exist as separate documents (see Profile Registry for the authoritative list):
+
+- **UAID DID Resolution Profile**  
+  Profile ID: `hcs-14.profile.uaid-did-resolution`  
+  Spec: `docs/standards/hcs-14/profiles/uaid-did-resolution.md`  
+  Summary: Defines minimal DID Document output requirements and mapping guidance when resolving `uaid:did:*`.
+
+- **AID Resolution via Web/DNS Profile**  
+  Profile ID: `hcs-14.profile.aid-dns-web`  
+  Spec: `docs/standards/hcs-14/profiles/aid-dns-web.md`  
+  Summary: Defines DNS TXT discovery at `_agent.<nativeId>` and optional cryptographic verification via the AID PKA handshake for `uaid:aid:*` where `nativeId` is an FQDN.
+
 
 
 ## Security Considerations
