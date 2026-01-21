@@ -38,6 +38,11 @@ sidebar_position: 11
         - [Complete Client Verification Implementation](#complete-client-verification-implementation)
     - [HCS-10 Integration for AI Agents](#hcs-10-integration-for-ai-agents)
     - [DID Field](#did-field)
+    - [Verifiable Presentations (VP) support](#verifiable-presentations-vp-support)
+      - ["whois" endpoint/functionality](#whois-endpointfunctionality)
+        - [VP rooted on DID (Linked VP resource)](#vp-rooted-on-did-linked-vp-resource)
+        - [VP rooted on HCS-11 profile](#vp-rooted-on-hcs-11-profile)
+      - [VP-based MCP Server Verification](#vp-based-mcp-server-verification)
     - [HCS-19 Integration for Privacy Compliance](#hcs-19-integration-for-privacy-compliance)
     - [Profile Update Flow](#profile-update-flow)
     - [Enums and Constants](#enums-and-constants)
@@ -689,6 +694,127 @@ The `inboundTopicId` and `outboundTopicId` fields in the profile reference [HCS-
 ### DID Field
 
 Profiles shall include a top‑level `uaid` field containing an HCS‑14 UAID for the subject (uaid:did:...). Other DIDs (e.g., `did:pkh`, `did:ethr`, `did:web`) may be referenced from the DID Document using `alsoKnownAs`.
+
+### Verifiable Presentations (VP) support
+
+Profiles can optionally support advanced identity features by leveraging [Verifiable Credentials (VC)](https://www.w3.org/TR/vc-data-model-2.0/#what-is-a-verifiable-credential).
+Specifically, highly relevant scenarios of establishing trust to a profile subject can be addressed by supporting [Verifiable Presentations (VP)](https://www.w3.org/TR/vc-data-model-2.0/#verifiable-presentations).
+
+This section proposes optional features for HCS-11 profiles that aim to provide convenient options for leveraging VPs for complex verification scenarios and improved interoperability with Decentralized Identity / SSI solutions.
+
+#### "whois" endpoint/functionality
+
+Profiles can optionally support "whois" functionality (based on [whois protocol](https://en.wikipedia.org/wiki/WHOIS))
+
+The "whois" functionality allows agents to expose a public Verifiable Presentation (VP) containing essential claims about the agent.
+These claims can be issued by the agent owner, a registry, or other trusted parties to provide verifiable context about the agent's identity, capabilities, or compliance status.
+
+**VP example**:
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1"
+  ],
+  "holder": "did:hedera:testnet:23g2MabDNq3KyB7oeH9yYZsJTRVeQ24DqX8o6scB98e3_0.0.5217215",
+  "type": ["VerifiablePresentation"],
+  "verifiableCredential" : {
+    "@context" : [ "https://www.w3.org/2018/credentials/v1" ],
+    "type" : [ "VerifiableCredential", "AgentCredential" ],
+    "id" : "76e12ec712ebc6f1c221ebfeb1f",
+    "issuer" : "did:hedera:testnet:FAeKMsqnNc2bwEsC8oqENBvGqjpGu9tpUi3VWaFEBXBo_0.0.5896419",
+    "issuanceDate" : "2025-06-16T18:56:59Z",
+    "expirationDate" : "2025-12-30T18:56:59Z",
+    "credentialSubject" : {
+      "id": "uaid:did:QmX4fB9XpS3yKqP8MHTbcQW7R6wN4PrGHz;uid=helper-bot;registry=hol;nativeId=hedera:testnet:0.0.2656337",
+      "display_name" : "AI Assistant Bot",
+      "aiAgent": {
+        "type": 0,
+        "capabilities": [0, 1],
+        "model": "gpt-4",
+        "creator": "Hashgraph Online"
+      }
+    },
+    "proof" : {
+      "type" : "Ed25519Signature2018",
+      "created" : "2025-06-16T21:56:59Z",
+      "proofPurpose" : "assertionMethod",
+      "verificationMethod" : "did:hedera:testnet:FAeKMsqnNc2bwEsC8oqENBvGqjpGu9tpUi3VWaFEBXBo_0.0.5896419#key-1",
+      "jws" : "eyJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdLCJhbGciOiJFZERTQSJ9..jbhZsH1jylvuZLov502qhTRkYvgbepU8ds8Mbgf4X7dhVp8F1P89Ql5WMA2DQEJxMGsVlaT8plfSY0JUw6XmDg"
+    }
+  },
+  "proof" : {
+    "type" : "Ed25519Signature2018",
+    "created" : "2025-06-16T22:53:31Z",
+    "domain" : "example.com",
+    "nonce" : "343s$FSFDa-",
+    "proofPurpose" : "authentication",
+    "verificationMethod" : "did:hedera:testnet:23g2MabDNq3KyB7oeH9yYZsJTRVeQ24DqX8o6scB98e3_0.0.5217215#key-1",
+    "jws" : "eyJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdLCJhbGciOiJFZERTQSJ9..twmPVhZgmKnnx6EI1xmUt3t_0GJizjambyLxWioG1hzwmDYnadWcQCC600uRpOE5WRIdx14y8uRHIa7AxSo5Cw"
+  }
+}
+```
+
+HCS-11 supports two primary approaches for associating Verifiable Presentations with a profile:
+
+##### VP rooted on DID (Linked VP resource)
+
+The profile indirectly references a Verifiable Presentation linked directly to the agent's DID Document.
+This follows the standard [Linked VP](https://identity.foundation/linked-vp/spec/v1.0.0/) approach.
+
+**Linked VP example**:
+
+```json
+{
+  "id": "#whois",
+  "type": "LinkedVerifiablePresentation",
+  "serviceEndpoint": "hcs://1/0.0.12345" // HRL pointing to VP content
+}
+```
+
+##### VP rooted on HCS-11 profile
+
+A new `verifiable_presentations` property is included in the HCS-11 profile object. This property contains an array of metadata entries (objects), each containing a scenario-specific id and URI (typically an HRL) pointing to the VP content.
+
+| Field                      | Type     | Required | Description                                                       |
+|:---------------------------|:---------|:---------|:------------------------------------------------------------------|
+| `verifiable_presentations` | object[] | No       | Entries with VP metadata (id and URI/HRL pointing to VP content). |
+
+**Example of `verifiable_presentations` entry:**
+
+```json
+{
+  "id": "whois", // Scenario-specific id of VP
+  "uri": "hcs://1/0.0.12345" // URI/HRL pointing to a VP containing claims about the agent
+}
+```
+
+#### VP-based MCP Server Verification
+
+VP-based verification for MCP Server is a more flexible and robust alternative to the signature verification approach:
+
+*   **Multi-claim support**: Enables verification of multiple attributes simultaneously (e.g., identity + certification + organizational membership)
+*   **Flexible Identifier support**: Verification is anchored on W3C DID instead of a Hedera account public key
+*   **Trust Delegation**: Allows verification of claims issued by third-party authorities, enhancing the trust model beyond self-attestation
+*   **Interoperability**: Leverages W3C Verifiable Credentials standards for compatibility with the broader SSI ecosystem
+
+The proposed verification flow is the following:
+
+1. **VP claims requirements**: VP linked to MCP server profile MUST include claim for MCP server URL and use its value exactly as it appears in the `mcpServer.connectionInfo.url` field, with no additional characters or formatting.
+
+2. **Profile Format**: The verification object in the profile shall be structured as:
+   ```json
+   "verification": {
+     "type": "vp",
+     "value": "hcs://1/0.0.12345" // HRL pointing to VP content
+   }
+   ```
+
+3. **Verification Procedure**:
+    - Client extracts the URL from `mcpServer.connectionInfo.url`
+    - Client retrieves VP content via reference in `verification.value`
+    - Client verifies VP (public keys are resolved from corresponding DID Documents in VP)
+    - Verification passes only if VP is valid and MCP server URL claim in VP equals the URL from `mcpServer.connectionInfo.url`
 
 ### HCS-19 Integration for Privacy Compliance
 
