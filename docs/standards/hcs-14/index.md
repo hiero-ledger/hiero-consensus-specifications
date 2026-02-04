@@ -774,7 +774,7 @@ This design allows multiple integration mechanisms to coexist without the HCS-14
 
 HCS-14 Profiles are listed in the Profile Registry:
 
-- `docs/standards/hcs-14/registry.md`
+- [Profile Registry](./profiles/registry.md)
 
 The registry enumerates profiles by Profile ID, status, version, and specification path. The registry MAY include additional non-normative notes such as known implementations or test suites.
 
@@ -818,12 +818,12 @@ The following profiles are expected to exist as separate documents (see Profile 
 
 - **UAID DID Resolution Profile**  
   Profile ID: `hcs-14.profile.uaid-did-resolution`  
-  Spec: `docs/standards/hcs-14/profiles/uaid-did-resolution.md`  
+  Spec: [profiles/uaid-did-resolution.md](./profiles/uaid-did-resolution.md)  
   Summary: Defines minimal DID Document output requirements and mapping guidance when resolving `uaid:did:*`.
 
 - **AID Resolution via Web/DNS Profile**  
   Profile ID: `hcs-14.profile.aid-dns-web`  
-  Spec: `docs/standards/hcs-14/profiles/aid-dns-web.md`  
+  Spec: [profiles/aid-dns-web.md](./profiles/aid-dns-web.md)  
   Summary: Defines DNS TXT discovery at `_agent.<nativeId>` and optional cryptographic verification via the AID PKA handshake for `uaid:aid:*` where `nativeId` is an FQDN.
 
 
