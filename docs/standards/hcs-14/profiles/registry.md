@@ -99,8 +99,7 @@ The following profiles are currently registered.
 - **Status:** Experimental
 - **Version:** 0.1.0
 - **Applies to:** `uaid:did:*`
-- **Specification:**  
-`docs/standards/hcs-14/profiles/uaid-did-resolution.md`
+- **Specification:** [uaid-did-resolution.md](./uaid-did-resolution.md)
 
 **Summary:**  
 Defines a protocol-neutral resolution and output contract for UAIDs that target an existing W3C DID. Relies entirely on the underlying DID method’s resolution and verification rules and introduces no new cryptographic assumptions.
@@ -113,8 +112,7 @@ Defines a protocol-neutral resolution and output contract for UAIDs that target 
 - **Status:** Experimental
 - **Version:** 0.1.0
 - **Applies to:** `uaid:aid:*` where `nativeId` is an FQDN
-- **Specification:**  
-`docs/standards/hcs-14/profiles/aid-dns-web.md`
+- **Specification:** [aid-dns-web.md](./aid-dns-web.md)
 
 **Summary:**  
 Defines discovery of deterministic AID-based UAIDs via DNS TXT records (`_agent.<domain>`) with optional cryptographic verification using the AID Public Key Authentication (PKA) handshake. Includes explicit fallback behavior to protocol-native discovery when DNS records are absent.
