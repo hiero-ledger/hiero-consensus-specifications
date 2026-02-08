@@ -28,7 +28,7 @@ sidebar_position: 26
 
 ## Authors
 
-- TBD
+- Jake Hall (https://x.com/jaycoolh)
 
 ## Abstract
 
