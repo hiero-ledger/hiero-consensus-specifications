@@ -54,7 +54,7 @@ Discussion: (URL to GitHub Discussion)
 
 ## Scope
 
-This process standard defines how Hiero Consensus Standards (HCS) are created, reviewed, finalized, and maintained. It exists to ensure consistency across specifications (e.g., HCS‑1, HCS‑2, HCS‑10, HCS‑12) and to codify expectations for contributors, editors, and implementers. It draws on best practices from the IETF (BCP 9/14), W3C Process, and the EIP/BIP ecosystems while tailoring requirements to the Hashgraph Online community.
+This process standard defines how Hiero Consensus Standards (HCS) are created, reviewed, finalized, and maintained. It exists to ensure consistency across specifications (e.g., HCS‑1, HCS‑2, HCS‑10, HCS‑12) and to codify expectations for contributors, editors, and implementers. It draws on best practices from the IETF (BCP 9/14), W3C Process, and the EIP/BIP ecosystems while tailoring requirements to the HCS community.
 
 This is a Process document. It governs how all Standard Track and Informational HCS documents are authored and maintained.
 
@@ -168,7 +168,7 @@ Editors SHOULD be listed in CODEOWNERS or documentation. At least two editors SH
 
 - **Canonical record**: GitHub Issues, PRs, and Discussions remain the authoritative history. Summaries from other channels SHOULD be linked back to the Discussion thread.
 - **Real-time coordination**: Telegram is the default synchronous backchannel for editors, stewards, and authors. Major updates (status transitions, Last Call announcements) SHALL be cross-posted there.
-- **Community presentations**: Authors are encouraged to present proposals during Hashgraph Online community calls. Recording links SHOULD be added to the GitHub Discussion so late reviewers can catch up.
+- **Community presentations**: Authors are encouraged to present proposals during HCS community calls. Recording links SHOULD be added to the GitHub Discussion so late reviewers can catch up.
 - **Steward touchpoints**: Numbering Stewards coordinate transitions from Discussion → Draft and ensure announcements are mirrored across channels.
 - **Accessibility**: When external media (videos, decks) are produced, include transcripts or notes in the repository or linked Discussion to maintain public accessibility.
 
@@ -576,7 +576,7 @@ To promote cross‑standard consistency, new Standard Track documents SHALL foll
 
 ## Acknowledgments
 
-This process incorporates proven patterns from the IETF, W3C, and major public‑chain proposal systems (EIPs/BIPs), adapted for the Hashgraph Online community’s needs.
+This process incorporates proven patterns from the IETF, W3C, and major public‑chain proposal systems (EIPs/BIPs), adapted for the HCS community’s needs.
 
 ## License
 
