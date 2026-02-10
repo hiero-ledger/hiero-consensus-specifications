@@ -142,7 +142,7 @@ Discovery registry messages extend HCS-2 and use `p: "hcs-26"`.
 
 The `register` operation records a new skill in the discovery registry. The sequence number of the `register` message becomes the **Skill UID**.
 
-Because some ecosystems enforce small message-size budgets for registry entries, HCS-26 supports `metadata` as either an inline object or an HCS-1 HRL string pointing to a metadata JSON document stored on HCS-1.
+Because some ecosystems enforce small message-size budgets for registry entries, HCS-26 supports `metadata` as either an inline object or a proper URI to a decentralized file store such as an HCS-1 HRL string pointing to a metadata JSON document stored on HCS-1, Ordinal (ord://), IPFS CID (ipfs://), and Arweave Id (ar://). 
 
 ```json
 {
@@ -184,7 +184,7 @@ Example with metadata stored via HCS-1:
 | `op`         | string            | Yes      | `register`.                                                             |
 | `t_id`       | string            | Yes      | Topic ID for the per-skill version registry.                            |
 | `account_id` | string            | Yes      | Hedera account ID of the publisher.                                     |
-| `metadata`   | object \| string  | Yes      | Skill metadata object (schema below) or HCS-1 HRL to a metadata JSON.    |
+| `metadata`   | object \| string  | Yes      | Skill metadata object (schema below) or decentralized file such as an HCS-1 HRL pointing to a metadata JSON. Also supports Ordinals, IPFS, and Arweave URIs.|
 | `m`          | string            | No       | Optional memo (max 500 characters).                                     |
 
 **Rules**
@@ -336,7 +336,7 @@ The discovery registry metadata MUST follow this schema whether provided inline 
 
 - `tags` (number[]) (OASF skill IDs)
 - `homepage` (string, URL)
-- `icon_hcs1` (string, HRL)
+- `icon` (string or decentralized file URI such as HRL, Ordinal, IPFS, and Arweave)
 - `languages` (string[])
 - `capabilities` (string[])
 - `repo` (string, URL)
