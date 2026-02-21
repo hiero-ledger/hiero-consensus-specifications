@@ -82,7 +82,7 @@ Last-Call-Ends: (TBD)
 - Patches [https://x.com/TMCC_Patches](https://x.com/TMCC_Patches)
 - Ahmer Inam [https://www.linkedin.com/in/ahmer/](https://www.linkedin.com/in/ahmer/)
 - Jake Hall [https://www.linkedin.com/in/jake-hall-62b6b7176/](https://www.linkedin.com/in/jake-hall-62b6b7176/)
-- Sam Nanthans [https://github.com/miseenplace](https://github.com/miseenplace) 
+- Sam Nanthans [https://github.com/miseenplace](https://github.com/miseenplace)
 
 ## Abstract
 
@@ -187,7 +187,7 @@ Parameter definitions:
 - `uid` = Unique identifier within the registry. Examples:
   - NANDA: agent name or registry-specific UID
   - HCS‑10 (Hedera): the account’s operator_id when available, defined as `inboundTopicId@accountId`. If no HCS‑11 profile is registered yet (no topics), use the Hedera account ID until the operator_id is established.
-- `domain` = Domain identifier for an agent (e.g. domain.com / foo.hbar / bar.eth / alice.btc) 
+- `domain` = Domain identifier for an agent (e.g. domain.com / foo.hbar / bar.eth / alice.btc)
 
 - `src` = Multibase base58btc (z…) of the full base DID (optional; included only when the UAID id was sanitized by removing method‑specific parameters, query, or fragment from the base DID).
 
@@ -816,15 +816,20 @@ Profiles specify how a resolver populates these fields for a given mechanism.
 
 The following profiles are expected to exist as separate documents (see Profile Registry for the authoritative list):
 
-- **UAID DID Resolution Profile**  
-  Profile ID: `hcs-14.profile.uaid-did-resolution`  
-  Spec: [profiles/uaid-did-resolution.md](./profiles/uaid-did-resolution.md)  
+- **UAID DID Resolution Profile**
+  Profile ID: `hcs-14.profile.uaid-did-resolution`
+  Spec: [profiles/uaid-did-resolution.md](./profiles/uaid-did-resolution.md)
   Summary: Defines minimal DID Document output requirements and mapping guidance when resolving `uaid:did:*`.
 
-- **AID Resolution via Web/DNS Profile**  
-  Profile ID: `hcs-14.profile.aid-dns-web`  
-  Spec: [profiles/aid-dns-web.md](./profiles/aid-dns-web.md)  
+- **AID Resolution via Web/DNS Profile**
+  Profile ID: `hcs-14.profile.aid-dns-web`
+  Spec: [profiles/aid-dns-web.md](./profiles/aid-dns-web.md)
   Summary: Defines DNS TXT discovery at `_agent.<nativeId>` and optional cryptographic verification via the AID PKA handshake for `uaid:aid:*` where `nativeId` is an FQDN.
+
+- **UAID Resolution via `_uaid` DNS TXT Profile**
+  Profile ID: `hcs-14.profile.uaid-dns-web`
+  Spec: [profiles/uaid-dns-web.md](./profiles/uaid-dns-web.md)
+  Summary: Defines DNS TXT discovery at `_uaid.<nativeId>` where records carry HCS-14 ID components and parameters directly, enabling deterministic UAID reconstruction and downstream profile dispatch.
 
 
 

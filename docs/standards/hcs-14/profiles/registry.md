@@ -8,7 +8,7 @@ sidebar_position: 140
 
 This document defines the official **Profile Registry** for the HCS-14 Universal Agent ID Standard.
 
-HCS-14 core specifies identifier structure, canonicalization, and deterministic generation rules.  
+HCS-14 core specifies identifier structure, canonicalization, and deterministic generation rules.
 **Profiles** extend HCS-14 by defining optional, integration-specific mechanisms for discovery, resolution, and verification.
 
 The registry exists to:
@@ -17,7 +17,7 @@ The registry exists to:
 - provide a transparent lifecycle and status model for extensions; and
 - give implementers a stable reference for supported profiles.
 
-This registry is **normative** with respect to profile identifiers and status definitions.  
+This registry is **normative** with respect to profile identifiers and status definitions.
 Individual profile specifications are normative only for implementations that claim support for them.
 
 ---
@@ -54,8 +54,8 @@ Each profile MUST declare one of the following statuses.
 
 Each profile MUST define:
 
-- **Profile ID**  
-  A stable, globally unique identifier.  
+- **Profile ID**
+  A stable, globally unique identifier.
   Recommended format:
 ```
 
@@ -63,10 +63,10 @@ hcs-14.profile.<short-name>
 
 ```
 
-- **Version**  
+- **Version**
 Semantic versioning (`MAJOR.MINOR.PATCH`).
 
-- **Applies to**  
+- **Applies to**
 The UAID target(s) covered by the profile (e.g., `uaid:aid:*`, `uaid:did:*`).
 
 ### Versioning rules
@@ -101,7 +101,7 @@ The following profiles are currently registered.
 - **Applies to:** `uaid:did:*`
 - **Specification:** [uaid-did-resolution.md](./uaid-did-resolution.md)
 
-**Summary:**  
+**Summary:**
 Defines a protocol-neutral resolution and output contract for UAIDs that target an existing W3C DID. Relies entirely on the underlying DID method’s resolution and verification rules and introduces no new cryptographic assumptions.
 
 ---
@@ -114,8 +114,21 @@ Defines a protocol-neutral resolution and output contract for UAIDs that target 
 - **Applies to:** `uaid:aid:*` where `nativeId` is an FQDN
 - **Specification:** [aid-dns-web.md](./aid-dns-web.md)
 
-**Summary:**  
+**Summary:**
 Defines discovery of deterministic AID-based UAIDs via DNS TXT records (`_agent.<domain>`) with optional cryptographic verification using the AID Public Key Authentication (PKA) handshake. Includes explicit fallback behavior to protocol-native discovery when DNS records are absent.
+
+---
+
+### 4.3 UAID Resolution via `_uaid` DNS TXT Profile
+
+- **Profile ID:** `hcs-14.profile.uaid-dns-web`
+- **Status:** Experimental
+- **Version:** 0.1.0
+- **Applies to:** `uaid:aid:*` and `uaid:did:*` where `nativeId` is an FQDN
+- **Specification:** [uaid-dns-web.md](./uaid-dns-web.md)
+
+**Summary:**
+Defines DNS TXT discovery at `_uaid.<nativeId>` where the record directly carries HCS-14 identifier components and routing parameters. Resolvers reconstruct and match UAID deterministically, then dispatch to downstream resolution profiles.
 
 ---
 
@@ -153,6 +166,7 @@ Resolver policy, profile selection, and precedence are implementation-defined un
 ## 7. Change Log
 
 - **0.1.0** — Initial registry with UAID DID Resolution and AID Web/DNS profiles.
+- **0.2.0** — Added UAID DNS TXT profile (`hcs-14.profile.uaid-dns-web`).
 
 ---
 
