@@ -128,7 +128,7 @@ Defines discovery of deterministic AID-based UAIDs via DNS TXT records (`_agent.
 - **Specification:** [uaid-dns-web.md](./uaid-dns-web.md)
 
 **Summary:**
-Defines DNS TXT discovery at `_uaid.<nativeId>` where the record directly carries HCS-14 identifier components and routing parameters. Resolvers reconstruct and match UAID deterministically, then dispatch to downstream resolution profiles.
+Defines DNS TXT discovery at `_uaid.<nativeId>` where the record directly carries HCS-14 identifier components and routing parameters. Resolvers reconstruct and match UAID deterministically, then optionally continue to full profile-specific resolution.
 
 ---
 
@@ -175,4 +175,3 @@ Resolver policy, profile selection, and precedence are implementation-defined un
 - HCS-14 Universal Agent ID Standard (core)
 - W3C Decentralized Identifier (DID) Core
 - RFC 2119: Key words for use in RFCs to Indicate Requirement Levels
-```

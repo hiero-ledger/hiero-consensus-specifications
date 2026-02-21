@@ -19,12 +19,12 @@ This profile defines DNS-based UAID identity binding using a dedicated TXT recor
 _uaid.<nativeId>
 ```
 
-The TXT payload carries HCS-14 identifier components and routing parameters directly, so resolvers can validate that a domain explicitly advertises a specific UAID and then hand off to a downstream profile.
+The TXT payload carries HCS-14 identifier components and routing parameters directly, so resolvers can validate that a domain explicitly advertises a specific UAID and optionally hand off to a downstream profile.
 
 This profile:
 - defines `_uaid` TXT record structure and validation;
 - defines deterministic reconstruction of UAID from TXT fields;
-- defines dispatch to downstream resolver profiles.
+- defines optional dispatch to downstream resolver profiles.
 
 This profile is optional. HCS-14 core does not require support for it.
 
@@ -80,11 +80,14 @@ Optional keys:
 | Key | Meaning |
 |---|---|
 | `domain` | HCS-14 `domain` parameter value, if used by the UAID. |
-| `src` | HCS-14 `src` parameter value for `uaid:did:*` sanitized IDs. |
+| `src` | HCS-14 `src` parameter value for `uaid:did:*` sanitized IDs, used to recover the full base DID for downstream DID resolution and key discovery. |
+| `m` | Optional human-readable memo for operators/indexers. MUST NOT affect UAID reconstruction or matching. |
 
 Unknown keys MUST be ignored for forward compatibility.
 
 This profile defines no profile-local TXT version field. Compatibility is governed by profile ID and specification version.
+
+This profile intentionally does not define TXT fields that directly carry public-key material. For `uaid:did:*`, verifiers SHOULD obtain key material through downstream DID resolution.
 
 ### 4.3 Field validation
 
@@ -94,6 +97,7 @@ Resolvers MUST validate:
 2. `id` is non-empty.
 3. `uid`, `registry`, `proto`, `nativeId` are non-empty.
 4. `nativeId` equals the queried `<nativeId>` (case-insensitive DNS comparison).
+5. `registry` remains required for deterministic routing and namespace disambiguation, including self-sovereign deployments.
 
 Records failing validation MUST be rejected.
 
@@ -104,6 +108,8 @@ For each valid TXT candidate, resolver MUST reconstruct candidate UAID using HCS
 ```
 uaid:{target}:{id};uid={uid};registry={registry};proto={proto};nativeId={nativeId}[;domain={domain}][;src={src}]
 ```
+
+The `m` key, when present, MUST NOT be included in reconstructed UAID.
 
 Resolver MUST then compare reconstructed candidate against input UAID after applying HCS-14 canonical ordering rules.
 
@@ -121,9 +127,21 @@ For selected candidate:
 
 1. Resolver SHOULD use a deterministic local profile-selection policy based on UAID parameters (for example, `registry`, `proto`, and `target`).
 2. Resolver SHOULD select the first supported downstream profile under that policy.
-3. If no supported downstream profile is available, resolver MUST fail with `ERR_NO_DOWNSTREAM_PROFILE`.
+3. If a supported downstream profile is available, resolver MAY dispatch to it.
+4. If no supported downstream profile is available, resolver MAY return a binding-only success result from this profile.
+5. If resolver policy requires downstream resolution and no supported downstream profile is available, resolver MUST fail with `ERR_NO_DOWNSTREAM_PROFILE`.
+6. If dispatch is attempted and fails, resolver MUST fail with `ERR_DISPATCH_FAILED`.
 
 This profile does not define endpoint extraction. Endpoint resolution and protocol-specific verification are delegated to downstream profiles.
+
+### 6.1 Deterministic dispatch policy example (Informative)
+
+Resolvers can use this deterministic flow:
+
+1. Build candidate downstream profiles in configured precedence order.
+2. Filter candidates by applicability predicates that depend on UAID parameters (for example, `target`, `registry`, and `proto`).
+3. Select the first supported profile in the filtered list.
+4. If no profile remains, return binding-only success unless local policy requires dispatch.
 
 ## 7. Verification Levels (Normative)
 
@@ -147,7 +165,8 @@ For successful resolution, resolver MUST report:
 - selected profile (`hcs-14.profile.uaid-dns-web`);
 - verification level (`dns-binding` or `dns-binding-dnssec`);
 - reconstructed UAID;
-- selected downstream profile (if any).
+- selected downstream profile (if any);
+- resolution mode (`binding-only` or `dispatched`).
 
 If downstream resolution is performed, resolver SHOULD include downstream result metadata.
 
@@ -161,7 +180,7 @@ Required error codes:
 * `ERR_NO_DNS_RECORD` — `_uaid` record missing.
 * `ERR_INVALID_UAID_DNS_RECORD` — TXT payload malformed/invalid.
 * `ERR_UAID_MISMATCH` — TXT UAID fields do not match input UAID.
-* `ERR_NO_DOWNSTREAM_PROFILE` — no supported downstream profile available.
+* `ERR_NO_DOWNSTREAM_PROFILE` — resolver policy requires downstream dispatch, but no supported downstream profile is available.
 * `ERR_DISPATCH_FAILED` — downstream profile dispatch attempted and failed.
 
 ## 10. Security Considerations

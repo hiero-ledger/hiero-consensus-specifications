@@ -58,8 +58,8 @@ Last-Call-Ends: (TBD)
     - [Profile Registry](#profile-registry)
     - [Profile Conformance](#profile-conformance)
     - [Profile ID and Versioning](#profile-id-and-versioning)
-    - [Core Resolver Contract](#core-resolver-contract-informative)
-- [Known Profiles](#known-profiles-informative)
+    - [Core Resolver Contract (Informative)](#core-resolver-contract-informative)
+    - [Known Profiles (Informative)](#known-profiles-informative)
   - [Security Considerations](#security-considerations)
   - [Trust and Reputation (Informative)](#trust-and-reputation-informative)
   - [Traceability (Informative)](#traceability-informative)
@@ -829,9 +829,7 @@ The following profiles are expected to exist as separate documents (see Profile 
 - **UAID Resolution via `_uaid` DNS TXT Profile**
   Profile ID: `hcs-14.profile.uaid-dns-web`
   Spec: [profiles/uaid-dns-web.md](./profiles/uaid-dns-web.md)
-  Summary: Defines DNS TXT discovery at `_uaid.<nativeId>` where records carry HCS-14 ID components and parameters directly, enabling deterministic UAID reconstruction and downstream profile dispatch.
-
-
+  Summary: Defines a generic top-level DNS discovery profile for HCS-14 using `_uaid.<nativeId>` TXT records, enabling deterministic UAID reconstruction, DNS-level agent discoverability, and optional continuation to full profile-specific resolution.
 
 ## Security Considerations
 
