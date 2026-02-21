@@ -82,7 +82,8 @@ Last-Call-Ends: (TBD)
 - Patches [https://x.com/TMCC_Patches](https://x.com/TMCC_Patches)
 - Ahmer Inam [https://www.linkedin.com/in/ahmer/](https://www.linkedin.com/in/ahmer/)
 - Jake Hall [https://www.linkedin.com/in/jake-hall-62b6b7176/](https://www.linkedin.com/in/jake-hall-62b6b7176/)
-- Sam Nanthans [https://github.com/miseenplace](https://github.com/miseenplace)
+- Sam Nanthans [https://github.com/miseenplace](https://github.com/miseenplace)\
+- Balázs Némethi [https://www.linkedin.com/in/balazsnemethi/](https://www.linkedin.com/in/balazsnemethi/) 
 
 ## Abstract
 

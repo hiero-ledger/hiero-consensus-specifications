@@ -11,6 +11,11 @@ sidebar_position: 141
 **Version:** 0.1.0
 **Applies to:** `uaid:aid:*` and `uaid:did:*` where `nativeId` is an FQDN
 
+## Authors
+
+- Michael Kantor [https://x.com/kantorcodes](https://x.com/kantorcodes)
+- Patches [https://x.com/TMCC_Patches](https://x.com/TMCC_Patches)
+
 ## 1. Scope
 
 This profile defines DNS-based UAID identity binding using a dedicated TXT record at:
