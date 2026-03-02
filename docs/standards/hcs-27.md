@@ -34,7 +34,7 @@ sidebar_position: 27
 
 ## Authors
 
-- TBD
+- Adethya Srinivasan
 
 ## Abstract
 
