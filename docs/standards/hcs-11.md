@@ -14,7 +14,7 @@ sidebar_position: 11
 
 - [HCS-11 Standard: Profile Standard](#hcs-11-standard-profile-standard)
     - [Status: Draft](#status-draft)
-    - [Version: 1.1](#version-11)
+    - [Version: 1.0.1](#version-11)
     - [Table of Contents](#table-of-contents)
   - [Authors](#authors)
   - [Abstract](#abstract)
