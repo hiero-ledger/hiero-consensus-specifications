@@ -20,6 +20,8 @@ Applies to all HCS-26 skill subjects.
 - scanner execution status;
 - vulnerability counts by severity (`critical`, `high`, `medium`, `low`).
 
+Severity counts MUST be non-negative integers. If the scanner emits findings that do not map cleanly to these buckets, implementations MUST map them deterministically and SHOULD map unknown severities to `medium`.
+
 ## Normalization
 
 If scan execution fails or no result exists in a universal contribution context, `score = 0`.

@@ -17,16 +17,16 @@ Applies to all HCS-26 skill subjects.
 
 ## Inputs
 
-- `category` presence
-- non-empty `tags[]` count
+- non-empty `tags[]` count (numeric taxonomy ids)
+- non-empty `languages[]` count
 
 ## Normalization
 
-- `score = 100` when category exists and tag count `>= 3`
-- `score = 85` when category exists and tag count `>= 1`
-- `score = 60` when category exists and tag count `= 0`
-- `score = 55` when category missing and tag count `>= 3`
-- `score = 35` when category missing and tag count `>= 1`
-- `score = 0` otherwise
+- `score = 100` when tag count `>= 3` and language count `>= 1`
+- `score = 85` when tag count `>= 1` and language count `>= 1`
+- `score = 70` when tag count `>= 3` and language count `= 0`
+- `score = 55` when tag count `>= 1` and language count `= 0`
+- `score = 35` when tag count `= 0` and language count `>= 1`
+- `score = 0` when tag count `= 0` and language count `= 0`
 
 Implementations MUST emit `metadata.taxonomy.score` as a finite value in `[0,100]`.

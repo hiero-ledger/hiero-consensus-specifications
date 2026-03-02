@@ -17,7 +17,9 @@ Applies to all HCS-26 skill subjects.
 
 ## Inputs
 
-- `verified` boolean for the exact `(network, name, version)` subject.
+- `verified` boolean for the exact `(network, discovery_topic_id, skill_uid, version)` subject.
+
+The `verified` value MUST represent an explicit approval state for that subject and MUST NOT be inferred or copied across versions.
 
 ## Normalization
 

@@ -1,6 +1,6 @@
 ---
 title: HCS-28 - Skill Trust Scores and Adapters
-description: A deterministic trust-scoring standard for HCS-26 skill releases, including independent profiles, adapter interfaces, and aggregation rules.
+description: A deterministic trust-scoring standard for HCS-26 skill releases, including independent scoring profiles, adapter interfaces, and aggregation rules.
 sidebar_position: 28
 ---
 
@@ -21,11 +21,14 @@ sidebar_position: 28
 - [Relationship to HCS-26](#relationship-to-hcs-26)
 - [Terminology](#terminology)
 - [Specification](#specification)
+  - [Scope](#scope)
   - [Subject Model](#subject-model)
   - [Baseline Signal Semantics](#baseline-signal-semantics)
+  - [Scoring Profiles](#scoring-profiles)
   - [Adapter Contract](#adapter-contract)
+  - [Adapter Identifier Namespacing](#adapter-identifier-namespacing)
   - [Contribution Modes](#contribution-modes)
-  - [Execution Profiles](#execution-profiles)
+  - [Execution Modes](#execution-modes)
   - [Normalization and Aggregation](#normalization-and-aggregation)
   - [Baseline Adapter Catalog](#baseline-adapter-catalog)
     - [Verification Adapters](#verification-adapters)
@@ -79,7 +82,7 @@ HCS-28 defines a **methodology for deriving scores**, not canonical reputation i
 
 Implementers and consumers SHOULD treat HCS-28 outputs as:
 
-- **Context-bound** (subject + execution profile + adapter configuration version),
+- **Context-bound** (subject + execution mode + adapter configuration version),
 - **Derived and versioned** (signal freshness and adapter logic matter), and
 - **Decision support** (one input among policy, provenance, and human review).
 
@@ -90,31 +93,49 @@ Implementations MUST NOT use HCS-28 totals as the sole authoritative basis for i
 - **HCS-26** defines the skill publication model and release artifacts.
 - **HCS-28** is a standalone trust-scoring standard for those skill releases.
 
-HCS-28 defines its own execution profiles, adapter contract, contribution semantics, and output model. Implementations MUST conform to this document directly rather than assuming compatibility with any other trust-score specification.
+HCS-28 defines its own execution modes, adapter contract, contribution semantics, and output model. Implementations MUST conform to this document directly rather than assuming compatibility with any other trust-score specification.
 
 ## Terminology
 
-- **Skill Subject**: An HCS-26 skill release identified by `network + name + version`.
+- **Skill Subject**: An HCS-26 skill release identified by `(network, discovery_topic_id, skill_uid, version)`.
+- **Discovery Topic ID**: HCS-2 topic id of the HCS-26 discovery registry.
+- **Skill UID**: Sequence number of the HCS-26 discovery registry `register` message (see HCS-26).
+- **Version**: Semantic version string for a skill version entry (see HCS-26).
+- **Manifest**: The `SKILL.json` manifest referenced by the skill version (see HCS-26).
 - **Trust Adapter**: Deterministic function mapping skill data/signals to normalized components.
 - **Component**: A normalized value in `[0,100]` emitted by one adapter.
 - **Adapter Total**: Mean of components emitted by one adapter.
 - **Composite Skill Trust Score**: Weighted mean of adapter totals in `[0,100]`.
-- **Execution Profile**: Runtime mode deciding which adapters are eligible (for example, local-only vs external I/O enabled).
+- **Scoring Profile**: A named scoring configuration defining adapter membership, weights, and normalization rules.
+- **Execution Mode**: Runtime mode deciding whether external I/O is allowed (for example, read vs refresh).
 
 Normative language such as **MUST**, **SHOULD**, and **MAY** follows RFC 2119.
 
 ## Specification
 
+### Scope
+
+HCS-28 defines:
+
+- a deterministic adapter contract for skill trust scoring;
+- how to normalize adapter outputs into `[0,100]`;
+- how to aggregate adapter totals into a composite score; and
+- a baseline adapter catalog and scoring profile for interoperability.
+
+HCS-28 does not mandate a specific registry implementation, storage layer, refresh schedule, voting mechanism, or verification governance model.
+
 ### Subject Model
 
 A conforming implementation MUST compute trust for one skill release record containing:
 
-- `network`, `name`, `version`,
-- release metadata (`description`, `tags`, `category`, `homepage`, `repo`, `commit`),
-- published files (including file names and hashes),
+- `network`, `discovery_topic_id`, `skill_uid`, `version`,
+- release metadata (HCS-26 discovery metadata and/or the HCS-26 `SKILL.json` manifest fields),
+- published files from `SKILL.json` (including file paths and `sha256`),
 - verification fields (`verified`, optional verification signals),
 - safety fields (optional persisted safety summary / findings),
 - voting context (`upvotes`).
+
+Implementations MUST treat a skill subject as the tuple `(network, discovery_topic_id, skill_uid, version)` for uniqueness.
 
 ### Baseline Signal Semantics
 
@@ -122,7 +143,7 @@ The baseline adapters depend on common input semantics. Conforming implementatio
 
 1. **`upvotes`**
    - MUST be a non-negative integer.
-   - MUST represent the count of active, unique voter assertions for the exact skill subject `(network, name, version)`.
+   - MUST represent the count of active, unique voter assertions for the exact skill subject `(network, discovery_topic_id, skill_uid, version)`.
    - A voter identity MUST be deduplicated to at most one active upvote per subject.
    - Removed/retracted votes MUST NOT be counted.
 
@@ -134,13 +155,42 @@ The baseline adapters depend on common input semantics. Conforming implementatio
    - `signals.publisherBound.ok`, `signals.repoCommitIntegrity.ok`, `signals.manifestIntegrity.ok`, and `signals.domainProof.ok` MUST be booleans.
    - Missing signals MUST be treated as `false` in the baseline profile unless a profile variant explicitly defines a different rule.
 
+   For interoperability, a verification signal object SHOULD use the following shape:
+
+   ```json
+   {
+     "signals": {
+       "publisherBound": { "ok": true, "checkedAt": "2026-03-02T12:00:00.000Z" },
+       "repoCommitIntegrity": { "ok": true, "checkedAt": "2026-03-02T12:00:00.000Z" },
+       "manifestIntegrity": { "ok": true, "checkedAt": "2026-03-02T12:00:00.000Z" },
+       "domainProof": { "ok": false, "checkedAt": "2026-03-02T12:00:00.000Z" }
+     }
+   }
+   ```
+
 4. **Metadata fields**
-   - `description`, `homepage`, `repo`, `commit`, `category`, and `tags` MUST be read from normalized metadata (trimmed strings; tags with empty entries removed).
+   - `description`, `homepage`, `repo`, and `commit` MUST be read from normalized metadata (trimmed strings).
    - Empty strings MUST be treated as missing.
+   - `tags` MUST be treated as a set of numeric taxonomy ids (HCS-26 uses OASF skill ids).
+   - `languages` MUST be treated as a set of normalized language identifiers.
 
 5. **Repository health inputs**
    - Repository-derived inputs MUST be sourced from public repository metadata or equivalent verifiable records.
    - Implementations MUST apply anti-abuse controls before converting repository inputs into `repository.health.score`.
+
+### Scoring Profiles
+
+Conforming implementations MUST expose scores for at least one profile:
+
+- `hcs-28/baseline`
+
+A scoring profile MUST define:
+
+- adapter membership;
+- weights and contribution modes; and
+- interpretation rules for missing and stale data.
+
+Implementations MAY define additional profiles, but MUST NOT claim baseline interoperability unless the `hcs-28/baseline` profile is supported.
 
 ### Adapter Contract
 
@@ -158,6 +208,40 @@ Returned scores MUST be finite numeric values. Non-finite values MUST be ignored
 
 Each externally reported score key (other than `total`) MUST have exactly one owning adapter. Implementations MUST NOT collapse multiple independently reported scores into a single adapter definition.
 
+#### Adapter output keys
+
+Adapters MUST emit keys in the form:
+
+```
+<adapterId>.<componentKey>
+```
+
+For the baseline profile, `componentKey` is `score` and each adapter emits exactly one key named `<adapterId>.score`.
+
+If `fetchScores(...)` returns `null`, the adapter emits no keys.
+
+#### Context
+
+The `context` object MUST include:
+
+- `profileId` (string),
+- `profileVersion` (string), and
+- `includeExternal` (boolean).
+
+### Adapter Identifier Namespacing
+
+Adapter identifiers MUST be stable and lowercase. Identifiers SHOULD use dot-separated namespaces to avoid collisions (for example, `metadata.links`).
+
+The baseline profile reserves the following identifier prefixes:
+
+- `verification.*`
+- `metadata.*`
+- `upvotes`
+- `safety.*`
+- `repository.*`
+
+Non-baseline adapters SHOULD be namespaced to an organization or implementation to reduce collision risk.
+
 ### Contribution Modes
 
 The adapter contribution mode controls denominator behavior:
@@ -166,14 +250,18 @@ The adapter contribution mode controls denominator behavior:
 - `universal`: if applicable, adapter participates in denominator even when it emits no scores.
 - `scoped`: same denominator behavior as universal; intended for profile-scoped policies.
 
-### Execution Profiles
+### Execution Modes
 
 A conforming implementation SHOULD support at least:
 
-1. **Read profile** (`includeExternal=false`): external lookups disabled for low-latency responses.
-2. **Refresh profile** (`includeExternal=true`): external lookups allowed for background trust refresh.
+1. **Read mode** (`includeExternal=false`): external lookups disabled for low-latency responses.
+2. **Refresh mode** (`includeExternal=true`): external lookups allowed for background trust refresh.
 
-The same scoring/aggregation algorithm MUST apply to both profiles; only adapter applicability/input freshness may differ.
+The same scoring/aggregation algorithm MUST apply to both modes; only adapter applicability/input freshness may differ.
+
+When `includeExternal=false`, implementations MUST NOT perform network I/O as part of trust computation. Adapters MAY return persisted/cached results.
+
+When `includeExternal=true`, implementations MAY perform network I/O, but MUST use bounded timeouts and MUST treat transient upstream failures as missing data rather than blocking score computation.
 
 ### Normalization and Aggregation
 
@@ -190,6 +278,20 @@ total = round2( sum( weight_i * adapterTotal_i ) / sum(weight_i) )
 
 If the denominator is empty, total MUST be `0`.
 
+#### Definitions
+
+- `clamp(x, 0, 100) = min(100, max(0, x))`
+- `round2(x)` rounds to 2 decimal places using half-up rounding.
+
+#### Denominator selection
+
+For a given scoring profile, the eligible adapter set is:
+
+1. Adapters where `appliesTo(subject, context)` is true.
+2. From that set:
+   - `universal` and `scoped` adapters participate in the denominator even when they emit no keys (missing keys are treated as `0`).
+   - `conditional` adapters participate in the denominator only when they emit at least one key.
+
 ### Baseline Adapter Catalog
 
 This catalog is the interoperable minimum for HCS-28. Each listed score has its own adapter.
@@ -202,7 +304,7 @@ Per-adapter normative definitions are in the HCS-28 adapter catalog:
 
 #### Verification Adapters
 
-All verification adapters apply in all profiles and emit a single `score` component.
+All verification adapters apply in all execution modes and emit a single `score` component.
 Each verification adapter MUST emit exactly one key named `<adapterId>.score`.
 
 | Adapter ID | Default Weight | Expected Input | Scoring Rule |
@@ -217,14 +319,14 @@ If verification signals are missing, adapters MUST emit `0` unless an implementa
 
 #### Metadata Adapters
 
-All metadata adapters apply in all profiles and emit a single `score` component.
+All metadata adapters apply in all execution modes and emit a single `score` component.
 Each metadata adapter MUST emit exactly one key named `<adapterId>.score`.
 
 | Adapter ID | Default Weight | Scoring Rule |
 | --- | --- | --- |
 | `metadata.links` | `0.30` | `100` when both homepage and repo are present, `60` when either is present, else `0` |
 | `metadata.description` | `0.25` | `>=160 => 100`, `>=80 => 85`, `>=30 => 65`, `>=10 => 40`, else `0` |
-| `metadata.taxonomy` | `0.20` | Based on category presence and non-empty tag count |
+| `metadata.taxonomy` | `0.20` | Based on tag count and language count (see adapter doc) |
 | `metadata.provenance` | `0.25` | `100` for repo+commit, `70` repo only, `40` commit only, else `0` |
 
 #### Upvotes Adapter
@@ -233,7 +335,7 @@ Each metadata adapter MUST emit exactly one key named `<adapterId>.score`.
 - `weight`: `1.00`
 - `contributionMode`: `conditional`
 - Components: `upvotes.score`
-- Applies in all profiles.
+- Applies in all execution modes.
 - Score function:
 
 ```
@@ -248,12 +350,12 @@ Where `upvotes` uses the normative input definition in [Baseline Signal Semantic
 - `weight`: `1.00`
 - `contributionMode`: `universal`
 - Components: `safety.cisco-scan.score`
-- Applies in all profiles.
+- Applies in all execution modes.
 
 Behavior:
 
-- In read profile, implementations SHOULD use persisted scan outcomes.
-- In refresh profile, implementations MAY execute a safety scan.
+- In read mode, implementations SHOULD use persisted scan outcomes.
+- In refresh mode, implementations MAY execute a safety scan.
 - Scan output MUST be normalized to `[0,100]` and SHOULD be persisted for read-time reuse.
 
 #### Repository Health Adapter
@@ -262,24 +364,83 @@ Behavior:
 - `weight`: `1.00`
 - `contributionMode`: `conditional`
 - Components: `repository.health.score`
-- Applies only when external lookups are enabled and a valid public source repository URL exists.
+- Applies when a valid public source repository URL exists (and may rely on external lookup or persisted results).
 
-This adapter MUST use a generalized anti-gaming model and MUST NOT expose raw, directly gameable sub-metrics as separately weighted trust adapters. Implementations SHOULD include anti-abuse penalties, temporal decay, and signal smoothing.
+This adapter MUST emit only `repository.health.score` as its baseline score key. Its deterministic baseline normalization is defined in the per-adapter catalog.
 
 Optional derived convenience fields such as `verification.score` and `metadata.score` MAY be published, but they are aggregation outputs and MUST NOT replace the required per-score adapters above.
+
+If published, these subtotals MUST be computed as weighted means over the corresponding baseline adapter scores:
+
+- `verification.score` MUST be the weighted mean of:
+  - `verification.review-status.score`
+  - `verification.publisher-bound.score`
+  - `verification.repo-commit-integrity.score`
+  - `verification.manifest-integrity.score`
+  - `verification.domain-proof.score`
+- `metadata.score` MUST be the weighted mean of:
+  - `metadata.links.score`
+  - `metadata.description.score`
+  - `metadata.taxonomy.score`
+  - `metadata.provenance.score`
 
 ### Output Schema
 
 A conforming response MUST include:
 
+- `subject` identifying the scored skill subject,
+- `profile` identifying the scoring profile,
+- `execution` describing execution mode, and
+- `trustScores` containing component scores and `total`.
+
+The `trustScores` object MUST include:
+
 - `trustScores.total` in `[0,100]`, and
 - baseline adapter outputs keyed as `<adapterId>.score` for all applicable adapters.
-- optional additional per-component entries keyed as `<adapterId>.<componentKey>`.
+
+Additional per-component entries MAY be included and MUST be keyed as `<adapterId>.<componentKey>`.
+
+#### Subject
+
+The `subject` object MUST include:
+
+- `network` (string),
+- `discovery_topic_id` (string, HCS-2 topic id),
+- `skill_uid` (string, discovery register sequence number), and
+- `version` (string, semver).
+
+#### Profile
+
+The `profile` object MUST include:
+
+- `id` (string), and
+- `version` (string).
+
+#### Execution
+
+The `execution` object MUST include:
+
+- `includeExternal` (boolean), and
+- `computedAt` (string, ISO-8601).
 
 Example:
 
 ```json
 {
+  "subject": {
+    "network": "testnet",
+    "discovery_topic_id": "0.0.123456",
+    "skill_uid": "42",
+    "version": "1.0.0"
+  },
+  "profile": {
+    "id": "hcs-28/baseline",
+    "version": "0.1"
+  },
+  "execution": {
+    "includeExternal": false,
+    "computedAt": "2026-03-02T12:00:00.000Z"
+  },
   "trustScores": {
     "upvotes.score": 28.19,
     "verification.review-status.score": 100,
@@ -293,8 +454,6 @@ Example:
     "metadata.provenance.score": 100,
     "safety.cisco-scan.score": 94,
     "repository.health.score": 72.34,
-    "verification.score": 90,
-    "metadata.score": 88.25,
     "total": 74.88
   }
 }
