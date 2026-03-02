@@ -17,6 +17,7 @@ sidebar_position: 25
   - [Additional Authors](#additional-authors)
 - [Abstract](#abstract)
 - [Motivation](#motivation)
+- [Interpretation Guidance (Informative)](#interpretation-guidance-informative)
 - [Terminology](#terminology)
 - [Architecture Overview (Informative)](#architecture-overview-informative)
 - [Adapter Types (Informative)](#adapter-types-informative)
@@ -64,7 +65,7 @@ sidebar_position: 25
 
 ### Additional Authors
 
-None.
+- Tony Camero [https://github.com/tonycamero](https://github.com/tonycamero)
 
 ## Abstract
 
@@ -92,6 +93,18 @@ At the same time, trust is multi-dimensional. Single metrics are brittle and can
 - support multiple signals without coupling to any one platform;
 - allow signals to be excluded when inapplicable; and
 - preserve forward compatibility as new trust metrics emerge.
+
+## Interpretation Guidance (Informative)
+
+This specification defines a **methodology for deriving scores**, not a canonical or portable reputation identity for a subject.
+
+Implementations and consumers SHOULD interpret HCS-25 outputs as:
+
+- **Context-bound**: a score reflects who is evaluating whom, under a specific configuration, signal snapshot, and use case.
+- **Derived and versioned**: the output depends on adapter logic, weights, applicability rules, and scoring configuration version.
+- **Decision support**: scores are informative inputs and SHOULD be used alongside additional controls (e.g., policy checks, provenance, manual review, or domain-specific safeguards).
+
+Implementations MUST NOT treat an HCS-25 score as a sole authoritative basis for irreversible gating, enforcement, or exclusion decisions.
 
 ## Terminology
 
