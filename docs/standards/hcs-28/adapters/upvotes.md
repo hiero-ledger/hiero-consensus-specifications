@@ -17,10 +17,14 @@ Applies to all HCS-26 skill subjects.
 
 ## Inputs
 
-- non-negative integer `upvotes`.
+- non-negative integer `upvotes`, defined as active unique upvotes for the exact skill subject `(network, name, version)`.
+- each voter identity MUST contribute at most one active upvote to the count.
+- retracted votes MUST be excluded.
 
 ## Normalization
 
 ```
 score = clamp( round(100 * (1 - e^(-upvotes / 20))), 0, 100 )
 ```
+
+Implementations MUST emit a finite numeric value for `upvotes.score` and MUST clamp to `[0,100]`.

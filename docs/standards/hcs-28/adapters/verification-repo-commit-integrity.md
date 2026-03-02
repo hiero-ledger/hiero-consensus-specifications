@@ -23,3 +23,5 @@ Applies when repository and commit metadata are present or when an integrity sig
 
 - `score = 100` when `signals.repoCommitIntegrity.ok=true`
 - `score = 0` otherwise
+
+Implementations MUST emit `verification.repo-commit-integrity.score` as a finite value in `[0,100]`.

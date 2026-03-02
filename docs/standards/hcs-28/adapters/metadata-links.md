@@ -25,3 +25,5 @@ Applies to all HCS-26 skill subjects.
 - `score = 100` when both `homepage` and `repo` are present
 - `score = 60` when either one is present
 - `score = 0` when neither is present
+
+Implementations MUST emit `metadata.links.score` as a finite value in `[0,100]`.

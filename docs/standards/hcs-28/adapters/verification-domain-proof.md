@@ -23,3 +23,5 @@ Applies when a skill declares a domain/homepage or when a domain proof signal ex
 
 - `score = 100` when `signals.domainProof.ok=true`
 - `score = 0` otherwise
+
+Implementations MUST emit `verification.domain-proof.score` as a finite value in `[0,100]`.

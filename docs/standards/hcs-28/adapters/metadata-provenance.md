@@ -26,3 +26,5 @@ Applies to all HCS-26 skill subjects.
 - `score = 70` when `repo` exists and `commit` missing
 - `score = 40` when `commit` exists and `repo` missing
 - `score = 0` otherwise
+
+Implementations MUST emit `metadata.provenance.score` as a finite value in `[0,100]`.

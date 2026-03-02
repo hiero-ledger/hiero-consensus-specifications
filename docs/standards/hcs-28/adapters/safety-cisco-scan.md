@@ -32,3 +32,5 @@ score = clamp(round2(raw), 0, 100)
 ```
 
 Implementations MAY use an equivalent deterministic mapping if documented in the scoring configuration version.
+
+Implementations MUST emit `safety.cisco-scan.score` as a finite value in `[0,100]`.

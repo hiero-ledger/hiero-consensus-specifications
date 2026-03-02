@@ -28,3 +28,5 @@ This adapter MUST expose only `repository.health.score` as its externally weight
 Implementations MUST combine internal repository signals with anti-gaming controls (for example, temporal decay, anomaly penalties, and smoothing) and clamp the result to `[0,100]`.
 
 Implementations MUST NOT expose raw, directly gameable repository sub-metrics as separate weighted trust adapters in the HCS-28 baseline profile.
+
+Implementations MUST emit `repository.health.score` as a finite value in `[0,100]`.

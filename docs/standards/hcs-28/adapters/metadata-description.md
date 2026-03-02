@@ -26,3 +26,5 @@ Applies to all HCS-26 skill subjects.
 - `score = 65` when length `>= 30`
 - `score = 40` when length `>= 10`
 - `score = 0` otherwise
+
+Implementations MUST emit `metadata.description.score` as a finite value in `[0,100]`.

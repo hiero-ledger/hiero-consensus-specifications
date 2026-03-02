@@ -22,6 +22,7 @@ sidebar_position: 28
 - [Terminology](#terminology)
 - [Specification](#specification)
   - [Subject Model](#subject-model)
+  - [Baseline Signal Semantics](#baseline-signal-semantics)
   - [Adapter Contract](#adapter-contract)
   - [Contribution Modes](#contribution-modes)
   - [Execution Profiles](#execution-profiles)
@@ -115,6 +116,32 @@ A conforming implementation MUST compute trust for one skill release record cont
 - safety fields (optional persisted safety summary / findings),
 - voting context (`upvotes`).
 
+### Baseline Signal Semantics
+
+The baseline adapters depend on common input semantics. Conforming implementations MUST apply the following definitions:
+
+1. **`upvotes`**
+   - MUST be a non-negative integer.
+   - MUST represent the count of active, unique voter assertions for the exact skill subject `(network, name, version)`.
+   - A voter identity MUST be deduplicated to at most one active upvote per subject.
+   - Removed/retracted votes MUST NOT be counted.
+
+2. **`verified`**
+   - MUST be version-scoped and MUST NOT be inferred across different versions of the same skill name.
+   - MUST represent explicit verification approval status for the exact subject.
+
+3. **Verification signals**
+   - `signals.publisherBound.ok`, `signals.repoCommitIntegrity.ok`, `signals.manifestIntegrity.ok`, and `signals.domainProof.ok` MUST be booleans.
+   - Missing signals MUST be treated as `false` in the baseline profile unless a profile variant explicitly defines a different rule.
+
+4. **Metadata fields**
+   - `description`, `homepage`, `repo`, `commit`, `category`, and `tags` MUST be read from normalized metadata (trimmed strings; tags with empty entries removed).
+   - Empty strings MUST be treated as missing.
+
+5. **Repository health inputs**
+   - Repository-derived inputs MUST be sourced from public repository metadata or equivalent verifiable records.
+   - Implementations MUST apply anti-abuse controls before converting repository inputs into `repository.health.score`.
+
 ### Adapter Contract
 
 A skill trust adapter MUST expose:
@@ -166,6 +193,7 @@ If the denominator is empty, total MUST be `0`.
 ### Baseline Adapter Catalog
 
 This catalog is the interoperable minimum for HCS-28. Each listed score has its own adapter.
+Conforming implementations MUST implement each baseline adapter below unless they declare a profile variance and a scoring configuration version that omits it.
 
 Per-adapter normative definitions are in the HCS-28 adapter catalog:
 
@@ -175,6 +203,7 @@ Per-adapter normative definitions are in the HCS-28 adapter catalog:
 #### Verification Adapters
 
 All verification adapters apply in all profiles and emit a single `score` component.
+Each verification adapter MUST emit exactly one key named `<adapterId>.score`.
 
 | Adapter ID | Default Weight | Expected Input | Scoring Rule |
 | --- | --- | --- | --- |
@@ -189,6 +218,7 @@ If verification signals are missing, adapters MUST emit `0` unless an implementa
 #### Metadata Adapters
 
 All metadata adapters apply in all profiles and emit a single `score` component.
+Each metadata adapter MUST emit exactly one key named `<adapterId>.score`.
 
 | Adapter ID | Default Weight | Scoring Rule |
 | --- | --- | --- |
@@ -209,6 +239,8 @@ All metadata adapters apply in all profiles and emit a single `score` component.
 ```
 score = clamp( round( 100 * (1 - e^(-upvotes / 20)) ), 0, 100 )
 ```
+
+Where `upvotes` uses the normative input definition in [Baseline Signal Semantics](#baseline-signal-semantics).
 
 #### Safety Adapter
 
@@ -241,7 +273,8 @@ Optional derived convenience fields such as `verification.score` and `metadata.s
 A conforming response MUST include:
 
 - `trustScores.total` in `[0,100]`, and
-- optional per-component entries keyed as `<adapterId>.<componentKey>`.
+- baseline adapter outputs keyed as `<adapterId>.score` for all applicable adapters.
+- optional additional per-component entries keyed as `<adapterId>.<componentKey>`.
 
 Example:
 

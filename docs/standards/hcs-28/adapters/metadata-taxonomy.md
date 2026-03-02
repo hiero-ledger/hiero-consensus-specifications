@@ -28,3 +28,5 @@ Applies to all HCS-26 skill subjects.
 - `score = 55` when category missing and tag count `>= 3`
 - `score = 35` when category missing and tag count `>= 1`
 - `score = 0` otherwise
+
+Implementations MUST emit `metadata.taxonomy.score` as a finite value in `[0,100]`.

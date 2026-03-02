@@ -1,6 +1,6 @@
 # HCS-28 (Adapter Catalog): Index
 
-This catalog lists the baseline HCS-28 trust adapters. Each adapter maps to one externally reported score.
+This catalog lists the baseline HCS-28 trust adapters. Each adapter maps to one externally reported score and defines normative input/normalization requirements for interoperability.
 
 ## Verification adapters
 

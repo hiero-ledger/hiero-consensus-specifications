@@ -23,3 +23,5 @@ Applies to all HCS-26 skill subjects.
 
 - `score = 100` when `verified=true`
 - `score = 0` when `verified=false` or missing
+
+Implementations MUST emit `verification.review-status.score` as a finite value in `[0,100]`.

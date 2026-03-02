@@ -23,3 +23,5 @@ Applies to all HCS-26 skill subjects.
 
 - `score = 100` when `signals.manifestIntegrity.ok=true`
 - `score = 0` otherwise
+
+Implementations MUST emit `verification.manifest-integrity.score` as a finite value in `[0,100]`.
