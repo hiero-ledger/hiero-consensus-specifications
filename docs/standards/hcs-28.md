@@ -1,6 +1,6 @@
 ---
 title: HCS-28 - Skill Trust Scores and Adapters
-description: A deterministic trust-scoring profile for HCS-26 skill releases, including adapter interface, aggregation rules, and baseline adapter set.
+description: A deterministic trust-scoring standard for HCS-26 skill releases, including independent profiles, adapter interfaces, and aggregation rules.
 sidebar_position: 28
 ---
 
@@ -18,7 +18,7 @@ sidebar_position: 28
 - [Abstract](#abstract)
 - [Motivation](#motivation)
 - [Interpretation Guidance (Informative)](#interpretation-guidance-informative)
-- [Relationship to HCS-25 and HCS-26](#relationship-to-hcs-25-and-hcs-26)
+- [Relationship to HCS-26](#relationship-to-hcs-26)
 - [Terminology](#terminology)
 - [Specification](#specification)
   - [Subject Model](#subject-model)
@@ -26,12 +26,12 @@ sidebar_position: 28
   - [Contribution Modes](#contribution-modes)
   - [Execution Profiles](#execution-profiles)
   - [Normalization and Aggregation](#normalization-and-aggregation)
-  - [Initial Baseline Adapter Set](#initial-baseline-adapter-set)
-    - [1) Upvotes Adapter](#1-upvotes-adapter)
-    - [2) Verified Adapter](#2-verified-adapter)
-    - [3) Metadata Completeness Adapter](#3-metadata-completeness-adapter)
-    - [4) Safety Adapter](#4-safety-adapter)
-    - [5) GitHub Repository Adapter](#5-github-repository-adapter)
+  - [Baseline Adapter Catalog](#baseline-adapter-catalog)
+    - [Verification Adapters](#verification-adapters)
+    - [Metadata Adapters](#metadata-adapters)
+    - [Upvotes Adapter](#upvotes-adapter)
+    - [Safety Adapter](#safety-adapter)
+    - [Repository Health Adapter](#repository-health-adapter)
   - [Output Schema](#output-schema)
   - [Versioning](#versioning)
 - [Security Considerations](#security-considerations)
@@ -52,12 +52,12 @@ None.
 
 ## Abstract
 
-HCS-28 defines a deterministic trust-scoring profile for **HCS-26 skill releases**. It standardizes:
+HCS-28 defines a deterministic trust-scoring standard for **HCS-26 skill releases**. It standardizes:
 
 1. the trust adapter contract for skills;
 2. applicability and contribution semantics;
 3. normalization and weighted aggregation rules; and
-4. an initial adapter baseline for production interoperability.
+4. an initial baseline adapter set for interoperability.
 
 The result is a reproducible **skill trust score** and explainable per-adapter component breakdown in the range **0–100**.
 
@@ -70,7 +70,7 @@ HCS-26 enables decentralized publication and discovery of skills. Consumers and 
 - community usage signals; and
 - metadata quality and maintainability.
 
-HCS-28 provides a portable scoring profile that can be used consistently across registries, marketplaces, and clients without coupling to one backend implementation.
+HCS-28 provides a portable scoring standard that can be used consistently across registries, marketplaces, and clients without coupling to one backend implementation.
 
 ## Interpretation Guidance (Informative)
 
@@ -84,13 +84,12 @@ Implementers and consumers SHOULD treat HCS-28 outputs as:
 
 Implementations MUST NOT use HCS-28 totals as the sole authoritative basis for irreversible exclusion or enforcement decisions.
 
-## Relationship to HCS-25 and HCS-26
+## Relationship to HCS-26
 
-- **HCS-25** defines a general trust-score methodology.
-- **HCS-28** defines a concrete, interoperable profile of that methodology for skills.
 - **HCS-26** defines the skill publication model and release artifacts.
+- **HCS-28** is a standalone trust-scoring standard for those skill releases.
 
-In short: HCS-26 defines skill releases, HCS-25 defines generic scoring principles, and HCS-28 binds those principles to skill-specific adapters and outputs.
+HCS-28 defines its own execution profiles, adapter contract, contribution semantics, and output model. Implementations MUST conform to this document directly rather than assuming compatibility with any other trust-score specification.
 
 ## Terminology
 
@@ -130,6 +129,8 @@ A skill trust adapter MUST expose:
 
 Returned scores MUST be finite numeric values. Non-finite values MUST be ignored.
 
+Each externally reported score key (other than `total`) MUST have exactly one owning adapter. Implementations MUST NOT collapse multiple independently reported scores into a single adapter definition.
+
 ### Contribution Modes
 
 The adapter contribution mode controls denominator behavior:
@@ -151,11 +152,10 @@ The same scoring/aggregation algorithm MUST apply to both profiles; only adapter
 
 Given raw adapter component map `M`:
 
-1. Clamp each component to `[0,100]`.
-2. Group components by adapter id prefix (`adapter.component`).
-3. For configured denominator adapters, missing declared components MUST be materialized as `0`.
-4. Compute each adapter total as arithmetic mean of that adapter’s component values.
-5. Compute composite total as weighted mean of adapter totals:
+1. Clamp each emitted component to `[0,100]`.
+2. For configured denominator adapters, missing required components MUST be materialized as `0`.
+3. Compute each adapter total as arithmetic mean of that adapter’s component values (single-component adapters resolve to that component value).
+4. Compute composite total as weighted mean of adapter totals:
 
 ```
 total = round2( sum( weight_i * adapterTotal_i ) / sum(weight_i) )
@@ -163,14 +163,45 @@ total = round2( sum( weight_i * adapterTotal_i ) / sum(weight_i) )
 
 If the denominator is empty, total MUST be `0`.
 
-### Initial Baseline Adapter Set
+### Baseline Adapter Catalog
 
-This baseline is the interoperable minimum for HCS-28 implementations.
+This catalog is the interoperable minimum for HCS-28. Each listed score has its own adapter.
 
-#### 1) Upvotes Adapter
+Per-adapter normative definitions are in the HCS-28 adapter catalog:
+
+- [`hcs-28/adapters/index.md`](./hcs-28/adapters/index.md)
+- [`hcs-28/adapters.md`](./hcs-28/adapters.md)
+
+#### Verification Adapters
+
+All verification adapters apply in all profiles and emit a single `score` component.
+
+| Adapter ID | Default Weight | Expected Input | Scoring Rule |
+| --- | --- | --- | --- |
+| `verification.review-status` | `0.50` | `verified` boolean | `100` when verified, else `0` |
+| `verification.publisher-bound` | `0.20` | `signals.publisherBound.ok` | `100` when true, else `0` |
+| `verification.repo-commit-integrity` | `0.40` | `signals.repoCommitIntegrity.ok` | `100` when true, else `0` |
+| `verification.manifest-integrity` | `0.30` | `signals.manifestIntegrity.ok` | `100` when true, else `0` |
+| `verification.domain-proof` | `0.10` | `signals.domainProof.ok` | `100` when true, else `0` |
+
+If verification signals are missing, adapters MUST emit `0` unless an implementation explicitly enables a backward-compatibility mode and documents it via scoring configuration versioning.
+
+#### Metadata Adapters
+
+All metadata adapters apply in all profiles and emit a single `score` component.
+
+| Adapter ID | Default Weight | Scoring Rule |
+| --- | --- | --- |
+| `metadata.links` | `0.30` | `100` when both homepage and repo are present, `60` when either is present, else `0` |
+| `metadata.description` | `0.25` | `>=160 => 100`, `>=80 => 85`, `>=30 => 65`, `>=10 => 40`, else `0` |
+| `metadata.taxonomy` | `0.20` | Based on category presence and non-empty tag count |
+| `metadata.provenance` | `0.25` | `100` for repo+commit, `70` repo only, `40` commit only, else `0` |
+
+#### Upvotes Adapter
 
 - `id`: `upvotes`
-- `weight`: `1`
+- `weight`: `1.00`
+- `contributionMode`: `conditional`
 - Components: `upvotes.score`
 - Applies in all profiles.
 - Score function:
@@ -179,90 +210,31 @@ This baseline is the interoperable minimum for HCS-28 implementations.
 score = clamp( round( 100 * (1 - e^(-upvotes / 20)) ), 0, 100 )
 ```
 
-#### 2) Verified Adapter
+#### Safety Adapter
 
-- `id`: `verified`
-- `weight`: `1`
-- Components:
-  - `verified.score`
-  - `verified.publisherBound`
-  - `verified.repoCommitIntegrity`
-  - `verified.manifestIntegrity`
-  - `verified.domainProof`
-- Applies in all profiles.
-
-Signal weights for `verified.score`:
-
-- `publisherBound = 20`
-- `repoCommitIntegrity = 40`
-- `manifestIntegrity = 30`
-- `domainProof = 10`
-
-If subject is not verified, `verified.score` MUST be `0`, while component flags MAY still expose available partial evidence as `100|0`.
-
-If subject is verified and no verification signal object exists, implementation MAY return all verified components as `100` for backward compatibility.
-
-#### 3) Metadata Completeness Adapter
-
-- `id`: `metadata`
-- `weight`: `0.75`
-- Components:
-  - `metadata.score`
-  - `metadata.links`
-  - `metadata.description`
-  - `metadata.taxonomy`
-  - `metadata.provenance`
-- Applies in all profiles.
-
-Component scoring:
-
-- **links**: `100` when both homepage and repo are present, `60` when either is present, else `0`.
-- **description**: length thresholds (`>=160 => 100`, `>=80 => 85`, `>=30 => 65`, `>=10 => 40`, else `0`).
-- **taxonomy**: based on category presence and non-empty tag count.
-- **provenance**: `100` for repo+commit, `70` repo only, `40` commit only, else `0`.
-
-Aggregate:
-
-```
-metadata.score = round2(
-  clamp(
-    links*0.30 + description*0.25 + taxonomy*0.20 + provenance*0.25,
-    0,
-    100
-  )
-)
-```
-
-#### 4) Safety Adapter
-
-- `id`: `safety`
-- `weight`: `1`
+- `id`: `safety.cisco-scan`
+- `weight`: `1.00`
 - `contributionMode`: `universal`
-- Components: `safety.score`
+- Components: `safety.cisco-scan.score`
 - Applies in all profiles.
 
 Behavior:
 
-- In read profile, implementation SHOULD use persisted or fallback score.
-- In refresh profile, implementation MAY execute an external safety scan.
+- In read profile, implementations SHOULD use persisted scan outcomes.
+- In refresh profile, implementations MAY execute a safety scan.
+- Scan output MUST be normalized to `[0,100]` and SHOULD be persisted for read-time reuse.
 
-For Cisco-scan compatible flows, scanner output SHOULD be normalized to `[0,100]` and persisted for read-time reuse.
+#### Repository Health Adapter
 
-#### 5) GitHub Repository Adapter
+- `id`: `repository.health`
+- `weight`: `1.00`
+- `contributionMode`: `conditional`
+- Components: `repository.health.score`
+- Applies only when external lookups are enabled and a valid public source repository URL exists.
 
-- `id`: `github`
-- `weight`: `1`
-- Components:
-  - `github.score`
-  - `github.repository`
-  - `github.community`
-  - `github.maintenance`
-  - `github.resilience`
-- Applies only when external lookups are enabled and a valid GitHub repo URL exists.
+This adapter MUST use a generalized anti-gaming model and MUST NOT expose raw, directly gameable sub-metrics as separately weighted trust adapters. Implementations SHOULD include anti-abuse penalties, temporal decay, and signal smoothing.
 
-Signals are derived from GitHub repository metadata (stars, watchers/subscribers, open issues, created timestamp, pushed timestamp) and anti-abuse penalties.
-
-The final GitHub score MUST be clamped to `[0,100]`. Implementations SHOULD cache results and apply short-term backoff on upstream rate limiting.
+Optional derived convenience fields such as `verification.score` and `metadata.score` MAY be published, but they are aggregation outputs and MUST NOT replace the required per-score adapters above.
 
 ### Output Schema
 
@@ -277,14 +249,19 @@ Example:
 {
   "trustScores": {
     "upvotes.score": 28.19,
-    "verified.score": 90,
-    "verified.publisherBound": 100,
-    "verified.repoCommitIntegrity": 100,
-    "verified.manifestIntegrity": 100,
-    "verified.domainProof": 0,
-    "metadata.score": 86.5,
-    "safety.score": 94,
-    "github.score": 72.34,
+    "verification.review-status.score": 100,
+    "verification.publisher-bound.score": 100,
+    "verification.repo-commit-integrity.score": 100,
+    "verification.manifest-integrity.score": 100,
+    "verification.domain-proof.score": 0,
+    "metadata.links.score": 100,
+    "metadata.description.score": 85,
+    "metadata.taxonomy.score": 70,
+    "metadata.provenance.score": 100,
+    "safety.cisco-scan.score": 94,
+    "repository.health.score": 72.34,
+    "verification.score": 90,
+    "metadata.score": 88.25,
     "total": 74.88
   }
 }
@@ -324,7 +301,6 @@ An implementation conforms to HCS-28 if it:
 
 ## References
 
-- HCS-25: AI Trust Score Methodology (`./hcs-25.md`)
 - HCS-26: Decentralized Agent Skills Registry (`./hcs-26.md`)
 - RFC 2119 (`https://www.rfc-editor.org/rfc/rfc2119`)
 
