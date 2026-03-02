@@ -1104,5 +1104,5 @@ _This revision (1.0.1) is a Clarification per [HCS-4 Change Management](hcs-4.md
 
 | Version | Date       | Description |
 | ------- | ---------- | ----------- |
-| 1.1     | (pending)  | Added optional MCP server profile fields: `protocolVersion`, `license`, `deprecated`, `deprecationMessage`, `securityPolicyUrl`, `authentication`, `tags`. |
+| 1.0.1     | (pending)  | Added optional MCP server profile fields: `protocolVersion`, `license`, `deprecated`, `deprecationMessage`, `securityPolicyUrl`, `authentication`, `tags`. |
 | 1.0     | —          | Initial draft. |
