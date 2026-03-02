@@ -1,10 +1,10 @@
 ---
-title: HCS-27 - Skill Trust Scores and Adapters
+title: HCS-28 - Skill Trust Scores and Adapters
 description: A deterministic trust-scoring profile for HCS-26 skill releases, including adapter interface, aggregation rules, and baseline adapter set.
-sidebar_position: 27
+sidebar_position: 28
 ---
 
-# HCS-27 Standard: Skill Trust Scores and Adapters
+# HCS-28 Standard: Skill Trust Scores and Adapters
 
 ### Status: Draft
 
@@ -52,7 +52,7 @@ None.
 
 ## Abstract
 
-HCS-27 defines a deterministic trust-scoring profile for **HCS-26 skill releases**. It standardizes:
+HCS-28 defines a deterministic trust-scoring profile for **HCS-26 skill releases**. It standardizes:
 
 1. the trust adapter contract for skills;
 2. applicability and contribution semantics;
@@ -70,27 +70,27 @@ HCS-26 enables decentralized publication and discovery of skills. Consumers and 
 - community usage signals; and
 - metadata quality and maintainability.
 
-HCS-27 provides a portable scoring profile that can be used consistently across registries, marketplaces, and clients without coupling to one backend implementation.
+HCS-28 provides a portable scoring profile that can be used consistently across registries, marketplaces, and clients without coupling to one backend implementation.
 
 ## Interpretation Guidance (Informative)
 
-HCS-27 defines a **methodology for deriving scores**, not canonical reputation identity.
+HCS-28 defines a **methodology for deriving scores**, not canonical reputation identity.
 
-Implementers and consumers SHOULD treat HCS-27 outputs as:
+Implementers and consumers SHOULD treat HCS-28 outputs as:
 
 - **Context-bound** (subject + execution profile + adapter configuration version),
 - **Derived and versioned** (signal freshness and adapter logic matter), and
 - **Decision support** (one input among policy, provenance, and human review).
 
-Implementations MUST NOT use HCS-27 totals as the sole authoritative basis for irreversible exclusion or enforcement decisions.
+Implementations MUST NOT use HCS-28 totals as the sole authoritative basis for irreversible exclusion or enforcement decisions.
 
 ## Relationship to HCS-25 and HCS-26
 
 - **HCS-25** defines a general trust-score methodology.
-- **HCS-27** defines a concrete, interoperable profile of that methodology for skills.
+- **HCS-28** defines a concrete, interoperable profile of that methodology for skills.
 - **HCS-26** defines the skill publication model and release artifacts.
 
-In short: HCS-26 defines skill releases, HCS-25 defines generic scoring principles, and HCS-27 binds those principles to skill-specific adapters and outputs.
+In short: HCS-26 defines skill releases, HCS-25 defines generic scoring principles, and HCS-28 binds those principles to skill-specific adapters and outputs.
 
 ## Terminology
 
@@ -165,7 +165,7 @@ If the denominator is empty, total MUST be `0`.
 
 ### Initial Baseline Adapter Set
 
-This baseline is the interoperable minimum for HCS-27 implementations.
+This baseline is the interoperable minimum for HCS-28 implementations.
 
 #### 1) Upvotes Adapter
 
@@ -315,7 +315,7 @@ Any change to these MUST be treated as a scoring configuration version change.
 
 ## Conformance
 
-An implementation conforms to HCS-27 if it:
+An implementation conforms to HCS-28 if it:
 
 1. Implements the adapter contract and contribution semantics in this document.
 2. Produces clamped `[0,100]` component values and weighted composite totals.
