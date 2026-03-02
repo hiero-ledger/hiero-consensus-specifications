@@ -9,15 +9,20 @@ sidebar_position: 142
 **Profile ID:** `hcs-14.profile.aid-dns-web`  
 **Status:** Experimental  
 **Version:** 0.1.0  
-**Applies to:** `uaid:aid:*` where `nativeId` is an FQDN  
+**Applies to:** `uaid:aid:*` where `nativeId` is an FQDN
+
+## Authors
+
+- Balázs Némethi [https://www.linkedin.com/in/balazsnemethi/](https://www.linkedin.com/in/balazsnemethi/) 
 
 ## 1. Scope
 
 This profile defines a standardized mechanism for resolving **deterministic AID-based UAIDs** (`uaid:aid:*`) to active agent endpoints using **DNS TXT records and Web-based discovery**.
 
 Specifically, this profile:
+
 - defines how DNS TXT records are used to discover agent endpoints for domain-based identifiers;
-- specifies how protocol precedence is determined *within this profile*;
+- specifies how protocol precedence is determined _within this profile_;
 - defines two levels of verification (metadata-based and cryptographic); and
 - establishes a clear fallback path to protocol-native discovery when DNS records are absent.
 
@@ -52,6 +57,7 @@ _agent.<nativeId>
 ```
 
 Example:
+
 ```
 
 _agent.example.com
@@ -62,13 +68,13 @@ _agent.example.com
 
 Resolvers MUST parse TXT records conforming to **AID v1.x** syntax. At minimum, the following fields are relevant to this profile:
 
-| Tag | Meaning |
-|----|--------|
-| `v` | AID record version (e.g., `aid1`) |
-| `p` or `proto` | Declared agent protocol identifier |
-| `u` | Endpoint URI |
-| `k` | Multibase-encoded Ed25519 public key (optional) |
-| `i` | Key identifier (optional) |
+| Tag            | Meaning                                         |
+| -------------- | ----------------------------------------------- |
+| `v`            | AID record version (e.g., `aid1`)               |
+| `p` or `proto` | Declared agent protocol identifier              |
+| `u`            | Endpoint URI                                    |
+| `k`            | Multibase-encoded Ed25519 public key (optional) |
+| `i`            | Key identifier (optional)                       |
 
 Unknown tags MUST be ignored for forward compatibility.
 
@@ -78,7 +84,7 @@ Example TXT payload (illustrative):
 
 v=aid1; p=a2a; u=[https://api.example.com/agent](https://api.example.com/agent); k=z6Mk...; i=key1
 
-````
+```
 
 ### 4.3 Protocol precedence (profile-scoped)
 
@@ -94,6 +100,7 @@ If an AID TXT record is successfully retrieved:
 Resolvers MUST extract the endpoint URI from the `u=` field.
 
 Resolvers MUST validate that:
+
 - the URI scheme is supported by the resolver; and
 - the URI is syntactically valid.
 
@@ -118,27 +125,32 @@ Resolvers implementing this profile SHOULD support both verification levels desc
 
 ### 6.1 Level 1: Metadata Match Verification
 
-**Trigger:**  
-- A valid AID TXT record is present; and  
+**Trigger:**
+
+- A valid AID TXT record is present; and
 - the record does **not** include a `k=` (public key) field.
 
 **Procedure:**
+
 1. Resolve the endpoint URI from `u=`.
 2. Fetch the agent’s canonical metadata using protocol-appropriate means (e.g., `agent.json`, HCS-11 profile).
 3. Recompute the AID hash from the canonical metadata.
 4. Confirm that the recomputed hash matches the AID component of the UAID.
 
-**Trust model:**  
+**Trust model:**
+
 - DNS integrity and HTTPS/TLS security.
 - No cryptographic binding between DNS and the endpoint beyond metadata consistency.
 
 ### 6.2 Level 2: Cryptographic Verification (PKA)
 
-**Trigger:**  
-- A valid AID TXT record is present; and  
+**Trigger:**
+
+- A valid AID TXT record is present; and
 - the record includes a `k=` field.
 
 **Procedure:**
+
 1. Perform the **AID Public Key Authentication (PKA) handshake** as defined in the AID specification.
 2. Require the agent server to sign a challenge or response using the private key corresponding to `k=`.
 3. Verify the signature using the public key from DNS.
@@ -146,6 +158,7 @@ Resolvers implementing this profile SHOULD support both verification levels desc
 
 **Security property:**  
 This level cryptographically binds:
+
 - control of the DNS zone; and
 - control of the live agent endpoint.
 
@@ -176,7 +189,7 @@ Illustrative metadata example:
   },
   "precedenceSource": "dns"
 }
-````
+```
 
 ## 8. Error Handling (Normative)
 
@@ -184,20 +197,20 @@ If resolution fails under this profile, the resolver MUST return a structured er
 
 Required error codes:
 
-* `ERR_NOT_APPLICABLE` — profile conditions not met.
-* `ERR_NO_DNS_RECORD` — DNS record not found.
-* `ERR_INVALID_AID_RECORD` — TXT record malformed or unsupported.
-* `ERR_ENDPOINT_INVALID` — endpoint URI invalid or unsupported.
-* `ERR_VERIFICATION_FAILED` — metadata or cryptographic verification failed.
+- `ERR_NOT_APPLICABLE` — profile conditions not met.
+- `ERR_NO_DNS_RECORD` — DNS record not found.
+- `ERR_INVALID_AID_RECORD` — TXT record malformed or unsupported.
+- `ERR_ENDPOINT_INVALID` — endpoint URI invalid or unsupported.
+- `ERR_VERIFICATION_FAILED` — metadata or cryptographic verification failed.
 
 Resolvers MAY include additional diagnostic information.
 
 ## 9. Security Considerations
 
-* **DNS spoofing:** Implementations SHOULD use DNSSEC where available and SHOULD prefer HTTPS endpoints.
-* **Downgrade risk:** Attackers could remove `k=` to force Level 1 verification. Operators SHOULD publish `k=` where cryptographic assurance is required.
-* **Endpoint substitution:** Metadata verification mitigates simple redirection attacks but does not replace cryptographic proof.
-* **Key rotation:** DNS TTLs and `i=` key identifiers SHOULD be used to manage key rollover safely.
+- **DNS spoofing:** Implementations SHOULD use DNSSEC where available and SHOULD prefer HTTPS endpoints.
+- **Downgrade risk:** Attackers could remove `k=` to force Level 1 verification. Operators SHOULD publish `k=` where cryptographic assurance is required.
+- **Endpoint substitution:** Metadata verification mitigates simple redirection attacks but does not replace cryptographic proof.
+- **Key rotation:** DNS TTLs and `i=` key identifiers SHOULD be used to manage key rollover safely.
 
 ## 10. Examples (Informative)
 
@@ -224,4 +237,3 @@ uaid:aid:7bU8...;uid=demo-agent;registry=example;proto=a2a;nativeId=example.com
 4. Resolver connects to `https://api.example.com/agent`.
 5. Resolver performs PKA handshake and metadata verification.
 6. Resolution succeeds with cryptographic assurance.
-
