@@ -29,6 +29,7 @@ sidebar_position: 28
   - [Adapter Identifier Namespacing](#adapter-identifier-namespacing)
   - [Contribution Modes](#contribution-modes)
   - [Execution Modes](#execution-modes)
+  - [Freshness and Staleness](#freshness-and-staleness)
   - [Normalization and Aggregation](#normalization-and-aggregation)
   - [Baseline Adapter Catalog](#baseline-adapter-catalog)
     - [Verification Adapters](#verification-adapters)
@@ -37,6 +38,8 @@ sidebar_position: 28
     - [Safety Adapter](#safety-adapter)
     - [Repository Health Adapter](#repository-health-adapter)
   - [Output Schema](#output-schema)
+  - [Reputation Topic Publication (Optional)](#reputation-topic-publication-optional)
+  - [Test Vectors](#test-vectors)
   - [Versioning](#versioning)
 - [Security Considerations](#security-considerations)
 - [Privacy Considerations](#privacy-considerations)
@@ -144,7 +147,9 @@ The baseline adapters depend on common input semantics. Conforming implementatio
 1. **`upvotes`**
    - MUST be a non-negative integer.
    - MUST represent the count of active, unique voter assertions for the exact skill subject `(network, discovery_topic_id, skill_uid, version)`.
-   - A voter identity MUST be deduplicated to at most one active upvote per subject.
+   - A voter identity MUST be represented by a stable `voter_id` string and MUST be deduplicated to at most one active upvote per subject.
+   - Implementations MUST define the `voter_id` scheme used (for example, `hedera:0.0.1234` or `evm:0xabc...`) and MUST version it as part of the scoring configuration.
+   - An upvote assertion MUST be attributable to a voter identity. Votes from unverifiable or anonymous identities MUST NOT be counted in baseline interoperability mode.
    - Removed/retracted votes MUST NOT be counted.
 
 2. **`verified`**
@@ -163,16 +168,22 @@ The baseline adapters depend on common input semantics. Conforming implementatio
        "publisherBound": { "ok": true, "checkedAt": "2026-03-02T12:00:00.000Z" },
        "repoCommitIntegrity": { "ok": true, "checkedAt": "2026-03-02T12:00:00.000Z" },
        "manifestIntegrity": { "ok": true, "checkedAt": "2026-03-02T12:00:00.000Z" },
-       "domainProof": { "ok": false, "checkedAt": "2026-03-02T12:00:00.000Z" }
+       "domainProof": { "ok": false, "checkedAt": "2026-03-02T12:00:00.000Z", "reason": "no_homepage" }
      }
    }
    ```
+
+   If a signal can expire (for example, domain control proof), the signal SHOULD include an `expiresAt` ISO-8601 timestamp.
+   If `expiresAt` is present and is in the past at computation time, implementations MUST treat the signal as `ok=false`.
 
 4. **Metadata fields**
    - `description`, `homepage`, `repo`, and `commit` MUST be read from normalized metadata (trimmed strings).
    - Empty strings MUST be treated as missing.
    - `tags` MUST be treated as a set of numeric taxonomy ids (HCS-26 uses OASF skill ids).
-   - `languages` MUST be treated as a set of normalized language identifiers.
+   - `languages` MUST be treated as a set of normalized language identifiers:
+     - values MUST be trimmed and lowercased,
+     - duplicates MUST be removed,
+     - implementations SHOULD use BCP-47 or ISO-639 language identifiers where available.
 
 5. **Repository health inputs**
    - Repository-derived inputs MUST be sourced from public repository metadata or equivalent verifiable records.
@@ -262,6 +273,27 @@ The same scoring/aggregation algorithm MUST apply to both modes; only adapter ap
 When `includeExternal=false`, implementations MUST NOT perform network I/O as part of trust computation. Adapters MAY return persisted/cached results.
 
 When `includeExternal=true`, implementations MAY perform network I/O, but MUST use bounded timeouts and MUST treat transient upstream failures as missing data rather than blocking score computation.
+
+### Freshness and Staleness
+
+Some adapters depend on time-varying external sources (for example, repository metadata and safety scanner outputs).
+To keep scores reproducible, implementations MUST define freshness rules per scoring configuration version.
+
+In baseline interoperability mode:
+
+1. Adapters SHOULD persist time-varying results along with `computedAt` (ISO-8601).
+2. Each persisted result SHOULD define an `expiresAt` timestamp, or the implementation MUST apply a profile-configured `maxAge`.
+3. If `includeExternal=false` and the most recent persisted result is expired or older than `maxAge`, the adapter MUST behave as if no result exists:
+   - conditional adapters emit no keys;
+   - universal adapters emit required keys as `0`.
+4. If `includeExternal=true`, adapters SHOULD refresh expired results. If refresh fails, adapters MAY fall back to a non-expired persisted result; otherwise, they MUST behave as if no result exists.
+
+Baseline recommended `maxAge` values (implementations MAY override but MUST version overrides):
+
+| Adapter ID | Recommended `maxAge` |
+| --- | --- |
+| `safety.cisco-scan` | 30 days |
+| `repository.health` | 7 days |
 
 ### Normalization and Aggregation
 
@@ -454,10 +486,145 @@ Example:
     "metadata.provenance.score": 100,
     "safety.cisco-scan.score": 94,
     "repository.health.score": 72.34,
-    "total": 74.88
+    "total": 77.23
   }
 }
 ```
+
+### Reputation Topic Publication (Optional)
+
+HCS-26 defines an optional reputation topic type (`type = 2`). HCS-28 standardizes how skill trust scores MAY be published to such a topic for portability.
+
+If an implementation publishes HCS-28 scores to an HCS-26 reputation topic, it MUST publish messages with:
+
+- `p = "hcs-28"`,
+- `op = "score"`,
+- a subject reference, and
+- a score payload.
+
+#### Message schema
+
+```json
+{
+  "p": "hcs-28",
+  "op": "score",
+  "subject": {
+    "network": "mainnet",
+    "discovery_topic_id": "0.0.123456",
+    "skill_uid": "42",
+    "version": "1.0.0"
+  },
+  "profile": {
+    "id": "hcs-28/baseline",
+    "version": "0.1"
+  },
+  "execution": {
+    "includeExternal": true,
+    "computedAt": "2026-03-02T12:00:00.000Z"
+  },
+  "scores": {
+    "total": 87.12,
+    "upvotes.score": 28.19,
+    "verification.review-status.score": 100
+  },
+  "snapshot": "hcs://1/0.0.99999"
+}
+```
+
+Rules:
+
+1. The `subject` tuple MUST identify the exact skill version being scored.
+2. The `scores.total` MUST be present.
+3. `scores` MAY include additional adapter component keys. If it does not include the full set, the message SHOULD include `snapshot` referencing a complete score document stored in a decentralized file store (for example, HCS-1).
+4. Consumers MUST treat on-topic `scores` as attestations. Authority, signature requirements, and consensus across multiple indexers are out of scope for HCS-28 and MAY follow HCS-26 reputation architectures.
+
+### Test Vectors
+
+These vectors are provided to make the baseline profile implementable and to reduce ambiguity in normalization and aggregation.
+
+#### Upvotes normalization
+
+Using `score = round(100 * (1 - e^(-upvotes / 20)))` with half-up rounding:
+
+| `upvotes` | Expected `upvotes.score` |
+| --- | --- |
+| `0` | `0` |
+| `1` | `5` |
+| `5` | `22` |
+| `10` | `39` |
+| `20` | `63` |
+| `50` | `92` |
+| `100` | `99` |
+
+#### Safety normalization
+
+Given `raw = 100 - (30*critical + 12*high + 4*medium + 1*low)`:
+
+| `critical` | `high` | `medium` | `low` | Expected `safety.cisco-scan.score` |
+| --- | --- | --- | --- | --- |
+| `0` | `0` | `0` | `0` | `100` |
+| `1` | `0` | `0` | `0` | `70` |
+| `0` | `1` | `3` | `10` | `66` |
+
+#### Repository health normalization
+
+Case A:
+
+- `isArchived=false`, `isFork=false`
+- `stars=50` → `starsScore=60`
+- `daysSinceLastPush=30` → `recencyScore=85`
+- `openIssues=10` → `issuesRatio=0.2` → `issuesScore=80`
+
+Expected:
+
+- `raw = 60*0.45 + 85*0.35 + 80*0.20 = 72.75`
+- `repository.health.score = 72.75`
+
+Case B:
+
+- `isArchived=false`, `isFork=false`
+- `stars=0` → `starsScore=0`
+- `daysSinceLastPush=400` → `recencyScore=15`
+- `openIssues=100` → `issuesRatio=100` → `issuesScore=20`
+
+Expected:
+
+- `raw = 0*0.45 + 15*0.35 + 20*0.20 = 9.25`
+- `repository.health.score = 9.25`
+
+#### Metadata description normalization
+
+| `descriptionLength` | Expected `metadata.description.score` |
+| --- | --- |
+| `0` | `0` |
+| `10` | `40` |
+| `30` | `65` |
+| `80` | `85` |
+| `160` | `100` |
+
+#### Verification signal mapping
+
+| Input | Expected score |
+| --- | --- |
+| `verified=true` | `verification.review-status.score = 100` |
+| `verified=false` | `verification.review-status.score = 0` |
+| `signals.manifestIntegrity.ok=true` | `verification.manifest-integrity.score = 100` |
+| `signals.manifestIntegrity.ok=false` or missing | `verification.manifest-integrity.score = 0` |
+
+#### Aggregation (baseline weights)
+
+If the following adapter scores are present:
+
+- `upvotes.score = 28.19` (weight `1.00`)
+- `verification.review-status.score = 100` (weight `0.50`)
+- `metadata.links.score = 100` (weight `0.30`)
+- `safety.cisco-scan.score = 94` (weight `1.00`)
+
+Then:
+
+- `denominator = 1.00 + 0.50 + 0.30 + 1.00 = 2.80`
+- `numerator = 28.19*1.00 + 100*0.50 + 100*0.30 + 94*1.00 = 202.19`
+- `total = round2(202.19 / 2.80) = 72.21`
 
 ### Versioning
 

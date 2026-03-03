@@ -35,3 +35,22 @@ Implementations MUST emit `verification.manifest-integrity.score` as a finite va
 3. For each entry in `SKILL.json.files[]`, the verifier can retrieve the referenced file content from its `hrl` and the computed `sha256` matches the manifest `files[].sha256`.
 
 If any required manifest content is missing, malformed, or has a hash mismatch, `signals.manifestIntegrity.ok` MUST be `false`.
+
+Hashing rules (baseline):
+
+- `sha256` MUST be computed over the raw bytes of the resolved file content.
+- `sha256` MUST be represented as lowercase hex in evidence and comparisons.
+
+## Evidence (Recommended)
+
+Implementations SHOULD preserve the manifest reference and mismatch summary, for example:
+
+```json
+{
+  "manifestHrl": "hcs://1/0.0.22222",
+  "filesChecked": 12,
+  "missingFiles": [],
+  "shaMismatches": [],
+  "checkedAt": "2026-03-02T12:00:00.000Z"
+}
+```

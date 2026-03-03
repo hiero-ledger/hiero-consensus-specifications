@@ -19,6 +19,8 @@ Applies to all HCS-26 skill subjects.
 
 - `description` length in characters after trim.
 
+Character counting MUST be deterministic. In baseline interoperability mode, implementations SHOULD count Unicode code points after trimming leading and trailing whitespace.
+
 ## Normalization
 
 - `score = 100` when length `>= 160`
@@ -28,3 +30,13 @@ Applies to all HCS-26 skill subjects.
 - `score = 0` otherwise
 
 Implementations MUST emit `metadata.description.score` as a finite value in `[0,100]`.
+
+## Evidence (Recommended)
+
+Implementations SHOULD preserve the normalized length used for scoring, for example:
+
+```json
+{
+  "descriptionLength": 182
+}
+```

@@ -30,3 +30,14 @@ Applies to all HCS-26 skill subjects.
 - `score = 0` when tag count `= 0` and language count `= 0`
 
 Implementations MUST emit `metadata.taxonomy.score` as a finite value in `[0,100]`.
+
+## Evidence (Recommended)
+
+Implementations SHOULD preserve the counts used for scoring, for example:
+
+```json
+{
+  "tagCount": 3,
+  "languageCount": 1
+}
+```

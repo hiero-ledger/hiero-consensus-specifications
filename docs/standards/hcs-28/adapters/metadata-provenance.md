@@ -28,3 +28,14 @@ Applies to all HCS-26 skill subjects.
 - `score = 0` otherwise
 
 Implementations MUST emit `metadata.provenance.score` as a finite value in `[0,100]`.
+
+## Evidence (Recommended)
+
+Implementations SHOULD preserve which fields were present at scoring time, for example:
+
+```json
+{
+  "repoPresent": true,
+  "commitPresent": true
+}
+```

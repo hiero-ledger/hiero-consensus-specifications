@@ -27,3 +27,14 @@ Applies to all HCS-26 skill subjects.
 - `score = 0` when neither is present
 
 Implementations MUST emit `metadata.links.score` as a finite value in `[0,100]`.
+
+## Evidence (Recommended)
+
+Implementations SHOULD preserve which fields were present at scoring time, for example:
+
+```json
+{
+  "homepagePresent": true,
+  "repoPresent": true
+}
+```

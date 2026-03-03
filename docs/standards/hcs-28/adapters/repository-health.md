@@ -23,6 +23,8 @@ If `includeExternal=false`, implementations MAY return a persisted score if avai
 - repository metadata from a public host (for example, GitHub);
 - freshness timestamp.
 
+If the repository host is not supported or cannot be queried deterministically, the adapter SHOULD emit no score (so a conditional adapter does not contribute) and SHOULD provide evidence indicating `not_applicable`.
+
 ## Normalization
 
 This adapter MUST expose only `repository.health.score` as its externally weighted score.
@@ -73,3 +75,22 @@ Otherwise, compute:
 Implementations MUST NOT expose raw, directly gameable repository sub-metrics as separate weighted trust adapters in the HCS-28 baseline profile.
 
 Implementations MUST emit `repository.health.score` as a finite value in `[0,100]`.
+
+## Freshness (Baseline)
+
+In baseline interoperability mode, persisted repository health results SHOULD expire after 7 days.
+
+## Evidence (Recommended)
+
+Implementations SHOULD preserve the derived inputs used for scoring, for example:
+
+```json
+{
+  "isArchived": false,
+  "isFork": false,
+  "stars": 50,
+  "openIssues": 10,
+  "daysSinceLastPush": 30,
+  "computedAt": "2026-03-02T12:00:00.000Z"
+}
+```
