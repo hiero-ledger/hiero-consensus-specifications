@@ -8,13 +8,13 @@ sidebar_position: 11
 
 ### Status: Draft
 
-### Version: 1.0
+### Version: 1.1
 
 ### Table of Contents
 
 - [HCS-11 Standard: Profile Standard](#hcs-11-standard-profile-standard)
     - [Status: Draft](#status-draft)
-    - [Version: 1.0](#version-10)
+    - [Version: 1.0.1](#version-11)
     - [Table of Contents](#table-of-contents)
   - [Authors](#authors)
   - [Abstract](#abstract)
@@ -51,10 +51,13 @@ sidebar_position: 11
       - [Profile Image Types](#profile-image-types)
       - [AI Agent Capabilities](#ai-agent-capabilities)
       - [MCP Server Capabilities](#mcp-server-capabilities)
+      - [MCP Server Authentication](#mcp-server-authentication)
+      - [MCP Server Tags](#mcp-server-tags)
     - [Predefined Arrays](#predefined-arrays)
       - [Social Media Platforms](#social-media-platforms)
     - [Example Profiles](#example-profiles)
   - [Conclusion](#conclusion)
+  - [Changelog](#changelog)
 
 ## Authors
 
@@ -301,6 +304,13 @@ Flora profiles **shall** set their `type` field to `3` and reference the Flora a
 | mcpServer.maintainer         | string   | No       | Organization maintaining this MCP server           |
 | mcpServer.repository         | string   | No       | URL to source code repository                       |
 | mcpServer.docs               | string   | No       | URL to server documentation                         |
+| mcpServer.protocolVersion   | string   | No       | MCP protocol version supported (e.g., "2024-11-05") for client compatibility checks |
+| mcpServer.license           | string   | No       | SPDX license identifier (e.g., "Apache-2.0", "MIT")                              |
+| mcpServer.deprecated        | boolean  | No       | If true, server is deprecated; clients MAY warn or steer users to alternatives      |
+| mcpServer.deprecationMessage | string  | No       | Human-readable deprecation notice or sunset date when deprecated is true             |
+| mcpServer.securityPolicyUrl | string   | No       | URL for vulnerability disclosure (e.g., SECURITY.md or dedicated policy page)     |
+| mcpServer.authentication    | number   | No       | Authentication method enum (see [MCP Server Authentication](#mcp-server-authentication)) |
+| mcpServer.tags              | number[] | No       | Discovery tags: HCS-14 skill IDs (0–39) and/or OASF skill IDs (100+); see [MCP Server Tags](#mcp-server-tags) and [HCS-14 OASF Skills Integration](../hcs-14/index.md#oasf-skills-integration-100-informative) |
 
 #### MCP Server Verification Process
 
@@ -952,6 +962,28 @@ _This enum lists the service types that MCP servers can offer, based on the actu
 | 14    | Search                     | Offers specialized search capabilities across various data sources                       |
 | 15    | Assistant Orchestration    | Manages interactions between multiple AI assistants or services                          |
 
+#### MCP Server Authentication
+
+_This enum defines the authentication methods an MCP server may require. Using a numeric enum keeps the payload small when profiles are stored on-chain._
+
+| Value | Description                                                                 |
+| ----- | --------------------------------------------------------------------------- |
+| 0     | None - no authentication required                                           |
+| 1     | API key - client supplies an API key                                        |
+| 2     | OAuth 2 - OAuth2 or OIDC                                                    |
+| 3     | Other - implementation-defined; document in server docs or profile `properties` |
+
+#### MCP Server Tags
+
+_For discovery and filtering, `mcpServer.tags` uses the same enumerated namespace as [HCS-14 Agent Skills](../hcs-14/index.md#agent-skills):_
+
+- **0–39**: [HCS-14 Core and Protocol-Specific Skills](../hcs-14/index.md#core-skills-0-19) (e.g. Text Generation, Code Generation, API Integration).
+- **100+**: [OASF Skills](https://schema.oasf.outshift.com/skill_categories) (Open Agentic Schema Framework), as used in [HCS-14 OASF Skills Integration (100+) (Informative)](../hcs-14/index.md#oasf-skills-integration-100-informative).
+
+Implementations SHOULD use numeric skill/category IDs in the `tags` array rather than free-form strings, so payloads stay small on-chain and align with HCS-14 and OASF registries. The array MAY be sorted numerically in ascending order for consistency with HCS-14.
+
+**Example:** `"tags": [0, 17, 10102, 1403]` (HCS-14 Text Generation, API Integration; OASF Text Generation, API Integration).
+
 ### Predefined Arrays
 
 #### Social Media Platforms
@@ -1089,3 +1121,12 @@ MCP Server Profile with UAID:
 ## Conclusion
 
 The HCS-11 standard provides a simple, extensible framework for managing profiles on Hedera. With built-in versioning and a flexible structure, it supports diverse use cases while maintaining compatibility as the standard evolves.
+
+## Changelog
+
+_This revision (1.0.1) is a Clarification per [HCS-4 Change Management](hcs-4.md#change-management): optional schema extensions only; no change to existing conformance requirements._
+
+| Version | Date       | Description |
+| ------- | ---------- | ----------- |
+| 1.0.1     | (pending)  | Added optional MCP server profile fields: `protocolVersion`, `license`, `deprecated`, `deprecationMessage`, `securityPolicyUrl`, `authentication`, `tags`. |
+| 1.0     | —          | Initial draft. |
