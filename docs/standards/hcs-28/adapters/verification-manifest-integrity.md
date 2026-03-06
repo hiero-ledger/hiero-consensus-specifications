@@ -40,6 +40,8 @@ Hashing rules (baseline):
 
 - `sha256` MUST be computed over the raw bytes of the resolved file content.
 - `sha256` MUST be represented as lowercase hex in evidence and comparisons.
+- Implementations MAY cache file-level integrity metadata outside the manifest, but the manifest `files[].sha256` values remain the canonical integrity source.
+- If an implementation does not persist redundant file hash fields locally, it MAY derive them by resolving the published file reference (`hrl` or equivalent canonical artifact reference) and hashing the artifact bytes directly.
 
 ## Evidence (Recommended)
 

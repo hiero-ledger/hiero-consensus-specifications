@@ -21,6 +21,7 @@ If `includeExternal=false`, implementations MAY return a persisted score if avai
 
 - repository URL (`repo`) and optional pinned commit (`commit`);
 - repository metadata from a public host (for example, GitHub);
+- a profile-defined comparable repository cohort;
 - freshness timestamp.
 
 If the repository host is not supported or cannot be queried deterministically, the adapter SHOULD emit no score (so a conditional adapter does not contribute) and SHOULD provide evidence indicating `not_applicable`.
@@ -29,48 +30,29 @@ If the repository host is not supported or cannot be queried deterministically, 
 
 This adapter MUST expose only `repository.health.score` as its externally weighted score.
 
-For baseline interoperability, implementations MUST compute `repository.health.score` deterministically from the following derived inputs when available:
+For baseline interoperability, implementations MUST compute `repository.health.score` deterministically from repository-derived signals while resisting direct metric gaming.
+
+At minimum, the implementation MUST derive a score from a subset of the following inputs when available:
 
 - `isArchived` (boolean)
-- `isFork` (boolean)
 - `stars` (non-negative integer)
+- `watchers` or equivalent subscriber count (non-negative integer)
 - `openIssues` (non-negative integer)
+- `ageDays` (non-negative integer)
 - `daysSinceLastPush` (non-negative integer)
+- engagement or watcher-to-star ratio
 
 If `isArchived=true`, `score` MUST be `0`.
 
-Otherwise, compute:
+Otherwise:
 
-1. `starsScore`:
-   - `0` when `stars = 0`
-   - `20` when `1 <= stars <= 9`
-   - `40` when `10 <= stars <= 49`
-   - `60` when `50 <= stars <= 199`
-   - `80` when `200 <= stars <= 999`
-   - `100` when `stars >= 1000`
-
-2. `recencyScore`:
-   - `100` when `daysSinceLastPush <= 7`
-   - `85` when `<= 30`
-   - `70` when `<= 90`
-   - `55` when `<= 180`
-   - `35` when `<= 365`
-   - `15` when `> 365`
-
-3. `issuesRatio = openIssues / max(1, stars)`.
-
-4. `issuesScore`:
-   - `100` when `issuesRatio <= 0.05`
-   - `80` when `<= 0.20`
-   - `60` when `<= 1.00`
-   - `40` when `<= 5.00`
-   - `20` when `> 5.00`
-
-5. `forkPenalty = 20` when `isFork=true`, else `0`.
-
-6. `raw = starsScore*0.45 + recencyScore*0.35 + issuesScore*0.20 - forkPenalty`.
-
-7. `score = clamp(round2(raw), 0, 100)`.
+1. The implementation MUST derive monotonic sub-signals for repository popularity, community engagement, maintenance recency, and resilience / issue burden.
+2. Each sub-signal MUST be normalized relative to a comparable cohort defined by the scoring profile.
+3. Implementations MAY use log scaling before relative normalization.
+4. When the cohort is large enough for stable distribution statistics, implementations MAY use bell-curve, z-score, or equivalent distribution-based normalization.
+5. When the cohort is too small for stable distribution statistics, implementations MUST use a deterministic percentile or rank-based fallback instead of collapsing scores to a fixed neutral value.
+6. If the cohort contains exactly one applicable repository and no disqualifying state such as `isArchived=true` applies, the implementation MAY assign `100` when the subject is the sole cohort leader.
+7. The final score MUST be a weighted combination of the normalized sub-signals and MUST be clamped to `[0,100]`.
 
 Implementations MUST NOT expose raw, directly gameable repository sub-metrics as separate weighted trust adapters in the HCS-28 baseline profile.
 
@@ -87,10 +69,13 @@ Implementations SHOULD preserve the derived inputs used for scoring, for example
 ```json
 {
   "isArchived": false,
-  "isFork": false,
   "stars": 50,
+  "watchers": 12,
   "openIssues": 10,
+  "ageDays": 420,
   "daysSinceLastPush": 30,
+  "cohortSize": 37,
+  "normalizationMode": "bell_curve",
   "computedAt": "2026-03-02T12:00:00.000Z"
 }
 ```

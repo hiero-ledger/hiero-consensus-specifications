@@ -32,14 +32,20 @@ Implementations MUST emit `verification.repo-commit-integrity.score` as a finite
 
 1. The skill declares `repo` and `commit` metadata (via HCS-26 discovery metadata and/or the `SKILL.json` manifest).
 2. The verifier can fetch the repository contents at the declared commit.
-3. For each file entry in `SKILL.json.files[]`, the verifier can locate the corresponding file content at the declared commit and the computed `sha256` matches the manifest `files[].sha256`.
+3. For each logical published file, the verifier can locate the corresponding repository content at the declared commit and reproduce the published artifact bytes deterministically.
+4. The computed `sha256` of those published artifact bytes matches the skill’s published integrity source.
 
-If `repo` or `commit` is missing, if the repository is private/unreachable, or if any file is missing or mismatched, `signals.repoCommitIntegrity.ok` MUST be `false`.
+If `repo` or `commit` is missing, if the repository is private or unreachable, or if any required file is missing or mismatched, `signals.repoCommitIntegrity.ok` MUST be `false`.
 
 File mapping rules (baseline):
 
 - The verifier MUST treat `SKILL.json.files[].path` as a relative path from the repository root at the declared commit.
-- The verifier MUST compute `sha256` over the raw file bytes as stored in the repository at that commit (no newline normalization).
+- The verifier MUST compute `sha256` over the published artifact bytes for that file.
+- If the publication pipeline applies a deterministic transform before publication, the verifier MUST compare against the transformed bytes rather than the unmodified repository bytes.
+- Deterministic publication transforms MUST be fully specified and reproducible. Examples include canonical JSON serialization, normalized path ordering, or injection of version / provenance fields from the release subject.
+- The verifier MAY derive the expected published digest from either:
+  - the manifest `files[].sha256`, or
+  - the canonical published artifact reference for that file (for example, an HCS content reference) by resolving the artifact bytes and hashing them directly.
 - If any manifest file path cannot be located at the commit, the signal MUST be `false`.
 
 ## Evidence (Recommended)

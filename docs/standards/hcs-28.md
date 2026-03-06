@@ -133,7 +133,7 @@ A conforming implementation MUST compute trust for one skill release record cont
 
 - `network`, `discovery_topic_id`, `skill_uid`, `version`,
 - release metadata (HCS-26 discovery metadata and/or the HCS-26 `SKILL.json` manifest fields),
-- published files from `SKILL.json` (including file paths and `sha256`),
+- published files from `SKILL.json` (including file paths and either `sha256` values or deterministic artifact references sufficient to recover the published bytes),
 - verification fields (`verified`, optional verification signals),
 - safety fields (optional persisted safety summary / findings),
 - voting context (`upvotes`).
@@ -188,6 +188,8 @@ The baseline adapters depend on common input semantics. Conforming implementatio
 5. **Repository health inputs**
    - Repository-derived inputs MUST be sourced from public repository metadata or equivalent verifiable records.
    - Implementations MUST apply anti-abuse controls before converting repository inputs into `repository.health.score`.
+   - Implementations MUST normalize repository health relative to a comparable cohort defined by the scoring profile. They MUST NOT rely exclusively on fixed absolute star-count thresholds in baseline interoperability mode.
+   - If the applicable cohort is too small for a stable distribution fit, implementations MUST use a deterministic fallback that preserves ordering across the available cohort. They MUST NOT collapse all small-cohort subjects to a fixed neutral score solely because the sample size is small.
 
 ### Scoring Profiles
 
@@ -399,6 +401,8 @@ Behavior:
 - Applies when a valid public source repository URL exists (and may rely on external lookup or persisted results).
 
 This adapter MUST emit only `repository.health.score` as its baseline score key. Its deterministic baseline normalization is defined in the per-adapter catalog.
+
+For baseline interoperability, the adapter score MUST remain cohort-relative even when the cohort is small. Implementations MAY switch from bell-curve normalization to percentile or rank-based normalization when the cohort is undersized, but they MUST keep the result deterministic and monotonic.
 
 Optional derived convenience fields such as `verification.score` and `metadata.score` MAY be published, but they are aggregation outputs and MUST NOT replace the required per-score adapters above.
 
