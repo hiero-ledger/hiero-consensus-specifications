@@ -8,13 +8,13 @@ sidebar_position: 11
 
 ### Status: Draft
 
-### Version: 1.0
+### Version: 1.1
 
 ### Table of Contents
 
 - [HCS-11 Standard: Profile Standard](#hcs-11-standard-profile-standard)
     - [Status: Draft](#status-draft)
-    - [Version: 1.0](#version-10)
+    - [Version: 1.0.1](#version-11)
     - [Table of Contents](#table-of-contents)
   - [Authors](#authors)
   - [Abstract](#abstract)
@@ -38,6 +38,11 @@ sidebar_position: 11
         - [Complete Client Verification Implementation](#complete-client-verification-implementation)
     - [HCS-10 Integration for AI Agents](#hcs-10-integration-for-ai-agents)
     - [DID Field](#did-field)
+    - [Verifiable Presentations (VP) support](#verifiable-presentations-vp-support)
+      - ["whois" endpoint/functionality](#whois-endpointfunctionality)
+        - [VP rooted on DID (Linked VP resource)](#vp-rooted-on-did-linked-vp-resource)
+        - [VP rooted on HCS-11 profile](#vp-rooted-on-hcs-11-profile)
+      - [VP-based MCP Server Verification](#vp-based-mcp-server-verification)
     - [HCS-19 Integration for Privacy Compliance](#hcs-19-integration-for-privacy-compliance)
     - [Profile Update Flow](#profile-update-flow)
     - [Enums and Constants](#enums-and-constants)
@@ -46,10 +51,13 @@ sidebar_position: 11
       - [Profile Image Types](#profile-image-types)
       - [AI Agent Capabilities](#ai-agent-capabilities)
       - [MCP Server Capabilities](#mcp-server-capabilities)
+      - [MCP Server Authentication](#mcp-server-authentication)
+      - [MCP Server Tags](#mcp-server-tags)
     - [Predefined Arrays](#predefined-arrays)
       - [Social Media Platforms](#social-media-platforms)
     - [Example Profiles](#example-profiles)
   - [Conclusion](#conclusion)
+  - [Changelog](#changelog)
 
 ## Authors
 
@@ -296,6 +304,13 @@ Flora profiles **shall** set their `type` field to `3` and reference the Flora a
 | mcpServer.maintainer         | string   | No       | Organization maintaining this MCP server           |
 | mcpServer.repository         | string   | No       | URL to source code repository                       |
 | mcpServer.docs               | string   | No       | URL to server documentation                         |
+| mcpServer.protocolVersion   | string   | No       | MCP protocol version supported (e.g., "2024-11-05") for client compatibility checks |
+| mcpServer.license           | string   | No       | SPDX license identifier (e.g., "Apache-2.0", "MIT")                              |
+| mcpServer.deprecated        | boolean  | No       | If true, server is deprecated; clients MAY warn or steer users to alternatives      |
+| mcpServer.deprecationMessage | string  | No       | Human-readable deprecation notice or sunset date when deprecated is true             |
+| mcpServer.securityPolicyUrl | string   | No       | URL for vulnerability disclosure (e.g., SECURITY.md or dedicated policy page)     |
+| mcpServer.authentication    | number   | No       | Authentication method enum (see [MCP Server Authentication](#mcp-server-authentication)) |
+| mcpServer.tags              | number[] | No       | Discovery tags: HCS-14 skill IDs (0–39) and/or OASF skill IDs (100+); see [MCP Server Tags](#mcp-server-tags) and [HCS-14 OASF Skills Integration](../hcs-14/index.md#oasf-skills-integration-100-informative) |
 
 #### MCP Server Verification Process
 
@@ -690,6 +705,127 @@ The `inboundTopicId` and `outboundTopicId` fields in the profile reference [HCS-
 
 Profiles shall include a top‑level `uaid` field containing an HCS‑14 UAID for the subject (uaid:did:...). Other DIDs (e.g., `did:pkh`, `did:ethr`, `did:web`) may be referenced from the DID Document using `alsoKnownAs`.
 
+### Verifiable Presentations (VP) support
+
+Profiles can optionally support advanced identity features by leveraging [Verifiable Credentials (VC)](https://www.w3.org/TR/vc-data-model-2.0/#what-is-a-verifiable-credential).
+Specifically, highly relevant scenarios of establishing trust to a profile subject can be addressed by supporting [Verifiable Presentations (VP)](https://www.w3.org/TR/vc-data-model-2.0/#verifiable-presentations).
+
+This section proposes optional features for HCS-11 profiles that aim to provide convenient options for leveraging VPs for complex verification scenarios and improved interoperability with Decentralized Identity / SSI solutions.
+
+#### "whois" endpoint/functionality
+
+Profiles can optionally support "whois" functionality (based on [whois protocol](https://en.wikipedia.org/wiki/WHOIS))
+
+The "whois" functionality allows agents to expose a public Verifiable Presentation (VP) containing essential claims about the agent.
+These claims can be issued by the agent owner, a registry, or other trusted parties to provide verifiable context about the agent's identity, capabilities, or compliance status.
+
+**VP example**:
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1"
+  ],
+  "holder": "did:hedera:testnet:23g2MabDNq3KyB7oeH9yYZsJTRVeQ24DqX8o6scB98e3_0.0.5217215",
+  "type": ["VerifiablePresentation"],
+  "verifiableCredential" : {
+    "@context" : [ "https://www.w3.org/2018/credentials/v1" ],
+    "type" : [ "VerifiableCredential", "AgentCredential" ],
+    "id" : "76e12ec712ebc6f1c221ebfeb1f",
+    "issuer" : "did:hedera:testnet:FAeKMsqnNc2bwEsC8oqENBvGqjpGu9tpUi3VWaFEBXBo_0.0.5896419",
+    "issuanceDate" : "2025-06-16T18:56:59Z",
+    "expirationDate" : "2025-12-30T18:56:59Z",
+    "credentialSubject" : {
+      "id": "uaid:did:QmX4fB9XpS3yKqP8MHTbcQW7R6wN4PrGHz;uid=helper-bot;registry=hol;nativeId=hedera:testnet:0.0.2656337",
+      "display_name" : "AI Assistant Bot",
+      "aiAgent": {
+        "type": 0,
+        "capabilities": [0, 1],
+        "model": "gpt-4",
+        "creator": "Hashgraph Online"
+      }
+    },
+    "proof" : {
+      "type" : "Ed25519Signature2018",
+      "created" : "2025-06-16T21:56:59Z",
+      "proofPurpose" : "assertionMethod",
+      "verificationMethod" : "did:hedera:testnet:FAeKMsqnNc2bwEsC8oqENBvGqjpGu9tpUi3VWaFEBXBo_0.0.5896419#key-1",
+      "jws" : "eyJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdLCJhbGciOiJFZERTQSJ9..jbhZsH1jylvuZLov502qhTRkYvgbepU8ds8Mbgf4X7dhVp8F1P89Ql5WMA2DQEJxMGsVlaT8plfSY0JUw6XmDg"
+    }
+  },
+  "proof" : {
+    "type" : "Ed25519Signature2018",
+    "created" : "2025-06-16T22:53:31Z",
+    "domain" : "example.com",
+    "nonce" : "343s$FSFDa-",
+    "proofPurpose" : "authentication",
+    "verificationMethod" : "did:hedera:testnet:23g2MabDNq3KyB7oeH9yYZsJTRVeQ24DqX8o6scB98e3_0.0.5217215#key-1",
+    "jws" : "eyJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdLCJhbGciOiJFZERTQSJ9..twmPVhZgmKnnx6EI1xmUt3t_0GJizjambyLxWioG1hzwmDYnadWcQCC600uRpOE5WRIdx14y8uRHIa7AxSo5Cw"
+  }
+}
+```
+
+HCS-11 supports two primary approaches for associating Verifiable Presentations with a profile:
+
+##### VP rooted on DID (Linked VP resource)
+
+The profile indirectly references a Verifiable Presentation linked directly to the agent's DID Document.
+This follows the standard [Linked VP](https://identity.foundation/linked-vp/spec/v1.0.0/) approach.
+
+**Linked VP example**:
+
+```json
+{
+  "id": "#whois",
+  "type": "LinkedVerifiablePresentation",
+  "serviceEndpoint": "hcs://1/0.0.12345" // HRL pointing to VP content
+}
+```
+
+##### VP rooted on HCS-11 profile
+
+A new `verifiable_presentations` property is included in the HCS-11 profile object. This property contains an array of metadata entries (objects), each containing a scenario-specific id and URI (typically an HRL) pointing to the VP content.
+
+| Field                      | Type     | Required | Description                                                       |
+|:---------------------------|:---------|:---------|:------------------------------------------------------------------|
+| `verifiable_presentations` | object[] | No       | Entries with VP metadata (id and URI/HRL pointing to VP content). |
+
+**Example of `verifiable_presentations` entry:**
+
+```json
+{
+  "id": "whois", // Scenario-specific id of VP
+  "uri": "hcs://1/0.0.12345" // URI/HRL pointing to a VP containing claims about the agent
+}
+```
+
+#### VP-based MCP Server Verification
+
+VP-based verification for MCP Server is a more flexible and robust alternative to the signature verification approach:
+
+*   **Multi-claim support**: Enables verification of multiple attributes simultaneously (e.g., identity + certification + organizational membership)
+*   **Flexible Identifier support**: Verification is anchored on W3C DID instead of a Hedera account public key
+*   **Trust Delegation**: Allows verification of claims issued by third-party authorities, enhancing the trust model beyond self-attestation
+*   **Interoperability**: Leverages W3C Verifiable Credentials standards for compatibility with the broader SSI ecosystem
+
+The proposed verification flow is the following:
+
+1. **VP claims requirements**: VP linked to MCP server profile MUST include claim for MCP server URL and use its value exactly as it appears in the `mcpServer.connectionInfo.url` field, with no additional characters or formatting.
+
+2. **Profile Format**: The verification object in the profile shall be structured as:
+   ```json
+   "verification": {
+     "type": "vp",
+     "value": "hcs://1/0.0.12345" // HRL pointing to VP content
+   }
+   ```
+
+3. **Verification Procedure**:
+    - Client extracts the URL from `mcpServer.connectionInfo.url`
+    - Client retrieves VP content via reference in `verification.value`
+    - Client verifies VP (public keys are resolved from corresponding DID Documents in VP)
+    - Verification passes only if VP is valid and MCP server URL claim in VP equals the URL from `mcpServer.connectionInfo.url`
+
 ### HCS-19 Integration for Privacy Compliance
 
 HCS-19 defines a privacy‑compliance framework for recording consent, processing, rights, and audit logs on HCS. When an AI agent processes personal data, HCS‑11 profiles should include a `privacy_compliance` object to declare compliance posture and reference the relevant HCS‑19 topics.
@@ -825,6 +961,28 @@ _This enum lists the service types that MCP servers can offer, based on the actu
 | 13    | Calendar/Schedule          | Provides access to calendar events, scheduling, and time management                      |
 | 14    | Search                     | Offers specialized search capabilities across various data sources                       |
 | 15    | Assistant Orchestration    | Manages interactions between multiple AI assistants or services                          |
+
+#### MCP Server Authentication
+
+_This enum defines the authentication methods an MCP server may require. Using a numeric enum keeps the payload small when profiles are stored on-chain._
+
+| Value | Description                                                                 |
+| ----- | --------------------------------------------------------------------------- |
+| 0     | None - no authentication required                                           |
+| 1     | API key - client supplies an API key                                        |
+| 2     | OAuth 2 - OAuth2 or OIDC                                                    |
+| 3     | Other - implementation-defined; document in server docs or profile `properties` |
+
+#### MCP Server Tags
+
+_For discovery and filtering, `mcpServer.tags` uses the same enumerated namespace as [HCS-14 Agent Skills](../hcs-14/index.md#agent-skills):_
+
+- **0–39**: [HCS-14 Core and Protocol-Specific Skills](../hcs-14/index.md#core-skills-0-19) (e.g. Text Generation, Code Generation, API Integration).
+- **100+**: [OASF Skills](https://schema.oasf.outshift.com/skill_categories) (Open Agentic Schema Framework), as used in [HCS-14 OASF Skills Integration (100+) (Informative)](../hcs-14/index.md#oasf-skills-integration-100-informative).
+
+Implementations SHOULD use numeric skill/category IDs in the `tags` array rather than free-form strings, so payloads stay small on-chain and align with HCS-14 and OASF registries. The array MAY be sorted numerically in ascending order for consistency with HCS-14.
+
+**Example:** `"tags": [0, 17, 10102, 1403]` (HCS-14 Text Generation, API Integration; OASF Text Generation, API Integration).
 
 ### Predefined Arrays
 
@@ -963,3 +1121,12 @@ MCP Server Profile with UAID:
 ## Conclusion
 
 The HCS-11 standard provides a simple, extensible framework for managing profiles on Hedera. With built-in versioning and a flexible structure, it supports diverse use cases while maintaining compatibility as the standard evolves.
+
+## Changelog
+
+_This revision (1.0.1) is a Clarification per [HCS-4 Change Management](hcs-4.md#change-management): optional schema extensions only; no change to existing conformance requirements._
+
+| Version | Date       | Description |
+| ------- | ---------- | ----------- |
+| 1.0.1     | (pending)  | Added optional MCP server profile fields: `protocolVersion`, `license`, `deprecated`, `deprecationMessage`, `securityPolicyUrl`, `authentication`, `tags`. |
+| 1.0     | —          | Initial draft. |
