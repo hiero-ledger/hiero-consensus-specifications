@@ -250,6 +250,7 @@ Trust adapters MUST declare:
 
 - a stable adapter identifier (`adapterId`);
 - a component naming strategy (see [Component Keys](#component-keys));
+- a default component key (`defaultComponentKey`) used when an applicable adapter contributes a deterministic `0` due to missing output (see [Contribution Modes](#contribution-modes));
 - an applicability rule (see [Applicability](#applicability));
 - a contribution mode (see [Contribution Modes](#contribution-modes));
 - an optional weight (see [Weights](#weights)); and
@@ -295,6 +296,16 @@ For each applicable adapter, an implementation MUST determine how it participate
 - `conditional` (default): included in the denominator only when it produces an output map (i.e., at least one component).
 
 Implementations SHOULD use `universal` or `scoped` for in-scope requirements that should penalize missingness (e.g., protocol compliance checks). Implementations SHOULD use `conditional` for ecosystem-dependent signals that are sparse or unevenly available.
+
+##### Default component key
+
+Each adapter MUST define a `defaultComponentKey` that is a valid component key (see [Component Keys](#component-keys)). It is used only when an adapter is applicable and the adapter's contribution mode requires it to participate in the denominator but the adapter produced an empty component map.
+
+If an adapter does not explicitly define `defaultComponentKey`, it MUST default to:
+
+```
+{adapterId}.score
+```
 
 #### Weights
 
@@ -414,6 +425,14 @@ An implementation MUST apply the following rules:
 3. If a component’s status is `missing`, `timeout`, or `error`, its `value` MUST be `0`, unless the adapter explicitly specifies that the component is **non-scorable** when unavailable.
 
 If a component is non-scorable when unavailable, it MUST be omitted from the adapter’s component set for aggregation, and MUST be reported as unavailable in the breakdown.
+
+##### Declaring non-scorable components
+
+An adapter MAY declare a component as non-scorable when unavailable by marking the component definition with a boolean flag:
+
+- `nonScorableWhenUnavailable: true`
+
+If `nonScorableWhenUnavailable` is not specified, it MUST default to `false`.
 
 #### Recommended Normalization Patterns (Informative)
 
