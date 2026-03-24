@@ -66,6 +66,7 @@ sidebar_position: 25
 ### Additional Authors
 
 - Tony Camero [https://github.com/tonycamero](https://github.com/tonycamero)
+- Adethya Srinivasan [https://github.com/AdetsGithub](https://github.com/AdetsGithub)
 
 ## Abstract
 
