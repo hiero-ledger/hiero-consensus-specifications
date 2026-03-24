@@ -66,6 +66,7 @@ sidebar_position: 25
 ### Additional Authors
 
 - Tony Camero [https://github.com/tonycamero](https://github.com/tonycamero)
+- Adethya Srinivasan [https://github.com/AdetsGithub](https://github.com/AdetsGithub)
 
 ## Abstract
 
@@ -250,6 +251,7 @@ Trust adapters MUST declare:
 
 - a stable adapter identifier (`adapterId`);
 - a component naming strategy (see [Component Keys](#component-keys));
+- a default component key (`defaultComponentKey`) used when an applicable adapter contributes a deterministic `0` due to missing output (see [Contribution Modes](#contribution-modes));
 - an applicability rule (see [Applicability](#applicability));
 - a contribution mode (see [Contribution Modes](#contribution-modes));
 - an optional weight (see [Weights](#weights)); and
@@ -295,6 +297,19 @@ For each applicable adapter, an implementation MUST determine how it participate
 - `conditional` (default): included in the denominator only when it produces an output map (i.e., at least one component).
 
 Implementations SHOULD use `universal` or `scoped` for in-scope requirements that should penalize missingness (e.g., protocol compliance checks). Implementations SHOULD use `conditional` for ecosystem-dependent signals that are sparse or unevenly available.
+
+##### Default component key
+
+Each adapter MUST define a `defaultComponentKey` that is a valid component key (see [Component Keys](#component-keys)).
+
+It is used only when an adapter is applicable, the adapter’s contribution mode requires it to participate in the denominator, and the adapter would otherwise contribute an empty component map after applying the rules in [Missing and Stale Data](#missing-and-stale-data).
+
+In that case, implementations MUST synthesize a single component with key `defaultComponentKey`, value `0`, and status `missing`.
+
+If an adapter does not explicitly define `defaultComponentKey`, it MUST default to:
+
+```text
+{adapterId}.score
 
 #### Weights
 
@@ -414,6 +429,18 @@ An implementation MUST apply the following rules:
 3. If a component’s status is `missing`, `timeout`, or `error`, its `value` MUST be `0`, unless the adapter explicitly specifies that the component is **non-scorable** when unavailable.
 
 If a component is non-scorable when unavailable, it MUST be omitted from the adapter’s component set for aggregation, and MUST be reported as unavailable in the breakdown.
+
+##### Declaring non-scorable components
+
+An adapter MAY declare, using an implementation-defined component definition, that a component is non-scorable when unavailable.
+
+For example, an implementation MAY represent this with a boolean flag such as:
+
+- `nonScorableWhenUnavailable: true`
+
+If no such declaration is present, the component MUST be treated as scorable when unavailable.
+
+Declaring a component as non-scorable when unavailable does not exempt an applicable adapter from denominator participation when its contribution mode requires participation. If that adapter would otherwise contribute an empty component map, implementations MUST apply `defaultComponentKey` as defined above.
 
 #### Recommended Normalization Patterns (Informative)
 
