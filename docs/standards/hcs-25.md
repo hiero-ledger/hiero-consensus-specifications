@@ -431,11 +431,15 @@ If a component is non-scorable when unavailable, it MUST be omitted from the ada
 
 ##### Declaring non-scorable components
 
-An adapter MAY declare a component as non-scorable when unavailable by marking the component definition with a boolean flag:
+An adapter MAY declare, using an implementation-defined component definition, that a component is non-scorable when unavailable.
+
+For example, an implementation MAY represent this with a boolean flag such as:
 
 - `nonScorableWhenUnavailable: true`
 
-If `nonScorableWhenUnavailable` is not specified, it MUST default to `false`.
+If no such declaration is present, the component MUST be treated as scorable when unavailable.
+
+Declaring a component as non-scorable when unavailable does not exempt an applicable adapter from denominator participation when its contribution mode requires participation. If that adapter would otherwise contribute an empty component map, implementations MUST apply `defaultComponentKey` as defined above.
 
 #### Recommended Normalization Patterns (Informative)
 
