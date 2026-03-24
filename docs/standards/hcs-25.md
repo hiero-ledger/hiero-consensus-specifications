@@ -299,13 +299,16 @@ Implementations SHOULD use `universal` or `scoped` for in-scope requirements tha
 
 ##### Default component key
 
-Each adapter MUST define a `defaultComponentKey` that is a valid component key (see [Component Keys](#component-keys)). It is used only when an adapter is applicable and the adapter's contribution mode requires it to participate in the denominator but the adapter produced an empty component map.
+Each adapter MUST define a `defaultComponentKey` that is a valid component key (see [Component Keys](#component-keys)).
+
+It is used only when an adapter is applicable, the adapter’s contribution mode requires it to participate in the denominator, and the adapter would otherwise contribute an empty component map after applying the rules in [Missing and Stale Data](#missing-and-stale-data).
+
+In that case, implementations MUST synthesize a single component with key `defaultComponentKey`, value `0`, and status `missing`.
 
 If an adapter does not explicitly define `defaultComponentKey`, it MUST default to:
 
-```
+```text
 {adapterId}.score
-```
 
 #### Weights
 
