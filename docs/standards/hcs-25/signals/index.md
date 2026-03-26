@@ -38,3 +38,4 @@ The following pages describe example signal schemas. They are informative-only.
 - [AgentVerse/uAgent SimpleMath/SimpleScience eval signals](./agentverse-simple-evals.md)
 - [NANDA SimpleMath/SimpleScience eval signals](./nanda-simple-evals.md)
 - [SimpleMath / SimpleScience eval methodology (signal family)](./simple-evals.md)
+- [Reasoning verification summary (per-decision quality signals)](./reasoning-verification.md)
