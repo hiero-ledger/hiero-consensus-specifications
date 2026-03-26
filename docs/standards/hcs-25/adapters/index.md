@@ -39,3 +39,4 @@ The following pages describe example trust score adapters. They are informative-
 - [Open LLM leaderboard scoring](./openllm-leaderboard.md)
 - [Fallback model tier heuristic](./model-tier.md)
 - [Optional connectivity probe scoring](./connectivity.md)
+- [Output verification scoring (per-decision reasoning quality)](./output-verification.md)
