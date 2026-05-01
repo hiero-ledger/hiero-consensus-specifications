@@ -68,12 +68,12 @@ A conforming implementation uses two Hedera topic structures:
 1. **Vault Topic** — An HCS-1 topic holding the user's encrypted context blob. Updated each session.
 2. **Audit Topic** — An HCS-2 indexed topic holding an append-only log of every context operation, with content hashes for tamper detection.
 
-Both topics are associated with a single HTS non-fungible token (the **ownership token**). The token's `token_id` is the stable identifier used to locate and authenticate the vault. Transfer of the token transfers all vault access rights.
+Both topics are associated with a single HTS non-fungible token (the **ownership token**). The token's `t_id` is the stable identifier used to locate and authenticate the vault. Transfer of the token transfers all vault access rights.
 
 ```
 ┌─────────────────────────────────────────────┐
 │               Ownership Token (HTS NFT)      │
-│               token_id: 0.0.XXXXX           │
+│               t_id: 0.0.XXXXX               │
 └──────────────────┬──────────────────────────┘
                    │ references
         ┌──────────┴──────────┐
@@ -87,6 +87,24 @@ Both topics are associated with a single HTS non-fungible token (the **ownership
 └───────────────┘    └─────────────────┘
 ```
 
+### Topic System
+
+#### Topic Types
+
+This standard uses two HCS topic types to manage AI context storage and integrity. Both topic types extend [HCS-2](./hcs-2.md):
+
+| Topic Type | Description | Key Configuration |
+|---|---|---|
+| **Vault Topic** | Stores the user's current encrypted context blob | Public submit key — client writes each session |
+| **Audit Topic** | Append-only log of all vault operations with content hashes | Public submit key; indexed (HCS-2 enum `0`) — all messages required to compute state |
+
+#### Topic Relationships
+
+- The **ownership token** (`t_id`) anchors both topics. Its value is embedded in each topic memo as the stable vault identifier.
+- The **vault topic** holds only the current encrypted context blob. Each `update` operation supersedes the prior content.
+- The **audit topic** accumulates all operations in order, providing a tamper-evident history. Gaps in `sequence` values indicate a potential integrity violation.
+- Transfer of the ownership token transfers all vault access rights. The new holder resolves and decrypts the vault using the same session protocol.
+
 ### Topic Memo Formats
 
 #### Vault Topic Memo
@@ -94,14 +112,14 @@ Both topics are associated with a single HTS non-fungible token (the **ownership
 The vault topic MUST be created with the following memo format:
 
 ```
-hcs-XX:vault:{token_id}
+hcs-XX:vault:{t_id}
 ```
 
 | Field | Description | Example |
 |-------|-------------|---------|
 | `hcs-XX` | Protocol identifier for this standard | `hcs-XX` |
 | `vault` | Topic type identifier | `vault` |
-| `token_id` | HTS token identifier of the ownership token | `0.0.12345` |
+| `t_id` | HTS token identifier of the ownership token | `0.0.12345` |
 
 Example: `hcs-XX:vault:0.0.12345`
 
@@ -110,14 +128,14 @@ Example: `hcs-XX:vault:0.0.12345`
 The audit topic MUST be created with the following memo format, extending the [HCS-2](./hcs-2.md) indexed registry memo:
 
 ```
-hcs-XX:audit:{token_id}:0:86400
+hcs-XX:audit:{t_id}:0:86400
 ```
 
 | Field | Description | Example |
 |-------|-------------|---------|
 | `hcs-XX` | Protocol identifier | `hcs-XX` |
 | `audit` | Topic type identifier | `audit` |
-| `token_id` | HTS token identifier of the ownership token | `0.0.12345` |
+| `t_id` | HTS token identifier of the ownership token | `0.0.12345` |
 | `0` | HCS-2 indexed enum — all messages required to compute state | `0` |
 | `86400` | TTL in seconds (default: one day) | `86400` |
 
@@ -152,7 +170,7 @@ Submitted to the vault topic on initial vault creation.
 {
   "p": "hcs-XX",
   "op": "create",
-  "token_id": "<HTS token identifier>",
+  "t_id": "<HTS token identifier>",
   "vault_ref": "<HCS-1 topic ID of encrypted context>",
   "content_hash": "<SHA-256 hex of encrypted context blob>",
   "version": "1.0",
@@ -164,7 +182,7 @@ Submitted to the vault topic on initial vault creation.
 |-------|----------|-------------|
 | `p` | REQUIRED | Must be `hcs-XX` |
 | `op` | REQUIRED | Must be `create` |
-| `token_id` | REQUIRED | HTS token identifier; must match vault topic memo |
+| `t_id` | REQUIRED | HTS token identifier; must match vault topic memo |
 | `vault_ref` | REQUIRED | HCS-1 topic ID where encrypted context is stored |
 | `content_hash` | REQUIRED | SHA-256 hex digest of the encrypted context blob |
 | `version` | REQUIRED | Protocol version; must be `1.0` for this version |
@@ -178,7 +196,7 @@ Submitted to the vault topic on each session close.
 {
   "p": "hcs-XX",
   "op": "update",
-  "token_id": "<HTS token identifier>",
+  "t_id": "<HTS token identifier>",
   "vault_ref": "<HCS-1 topic ID of updated encrypted context>",
   "content_hash": "<SHA-256 hex of updated encrypted context blob>",
   "prev_hash": "<SHA-256 hex of previous encrypted context blob>",
@@ -190,7 +208,7 @@ Submitted to the vault topic on each session close.
 |-------|----------|-------------|
 | `p` | REQUIRED | Must be `hcs-XX` |
 | `op` | REQUIRED | Must be `update` |
-| `token_id` | REQUIRED | HTS token identifier |
+| `t_id` | REQUIRED | HTS token identifier |
 | `vault_ref` | REQUIRED | HCS-1 topic ID of updated context |
 | `content_hash` | REQUIRED | SHA-256 hex of new encrypted context blob |
 | `prev_hash` | RECOMMENDED | SHA-256 hex of previous blob; enables chain verification |
@@ -202,7 +220,7 @@ Submitted to the vault topic on each session close.
 {
   "p": "hcs-XX",
   "op": "delete",
-  "token_id": "<HTS token identifier>",
+  "t_id": "<HTS token identifier>",
   "m": "<optional memo>"
 }
 ```
@@ -215,7 +233,7 @@ Submitted when the ownership token is transferred to a new holder.
 {
   "p": "hcs-XX",
   "op": "transfer",
-  "token_id": "<HTS token identifier>",
+  "t_id": "<HTS token identifier>",
   "from": "<previous holder wallet address>",
   "to": "<new holder wallet address>",
   "m": "<optional memo>"
@@ -230,7 +248,7 @@ Submitted to the audit topic after each vault operation.
 {
   "p": "hcs-XX",
   "op": "log",
-  "token_id": "<HTS token identifier>",
+  "t_id": "<HTS token identifier>",
   "vault_op": "<vault operation: create | update | delete | transfer>",
   "content_hash": "<SHA-256 hex of encrypted context blob>",
   "sequence": "<monotonically increasing integer>",
@@ -242,7 +260,7 @@ Submitted to the audit topic after each vault operation.
 |-------|----------|-------------|
 | `p` | REQUIRED | Must be `hcs-XX` |
 | `op` | REQUIRED | Must be `log` |
-| `token_id` | REQUIRED | HTS token identifier |
+| `t_id` | REQUIRED | HTS token identifier |
 | `vault_op` | REQUIRED | The vault operation being logged |
 | `content_hash` | REQUIRED | SHA-256 hex of the encrypted context blob after the operation |
 | `sequence` | REQUIRED | Monotonically increasing integer; gaps indicate missing entries |
@@ -253,13 +271,13 @@ Submitted to the audit topic after each vault operation.
 A vault is referenced using a Hedera Resource Locator (HRL) in the following format:
 
 ```
-hcs://XX/{token_id}
+hcs://XX/{t_id}
 ```
 
 Example: `hcs://XX/0.0.12345`
 
 Implementations resolving a vault reference MUST:
-1. Look up the vault topic memo matching `hcs-XX:vault:{token_id}`
+1. Look up the vault topic memo matching `hcs-XX:vault:{t_id}`
 2. Retrieve the latest HCS-1 content from the vault topic
 3. Verify the content hash against the most recent audit log entry
 
@@ -272,11 +290,11 @@ A session consists of the following operations in order:
 | 1 | Client | — | Requests a single-use challenge from the session endpoint |
 | 2 | Server | — | Issues a unique random challenge; records session ID |
 | 3 | Client | — | Signs challenge with wallet private key |
-| 4 | Client | — | Submits token_id and wallet signature to session endpoint |
+| 4 | Client | — | Submits `t_id` and wallet signature to session endpoint |
 | 5 | Server | — | Verifies wallet is current holder of ownership token on-chain |
 | 6 | Server | — | Verifies signature was produced by the verified wallet |
 | 7 | Server | — | Issues session token; does not store derived key |
-| 8 | Client | — | Derives encryption key from token_id and wallet signature |
+| 8 | Client | — | Derives encryption key from `t_id` and wallet signature |
 | 9 | Client | — | Retrieves encrypted context blob from vault topic (HCS-1) |
 | 10 | Client | — | Decrypts context; injects into AI provider request |
 | 11 | Client | — | Re-encrypts updated context after AI interaction |
@@ -292,7 +310,7 @@ Challenges MUST be single-use. A challenge MUST NOT be accepted more than once. 
 
 - `p` MUST be the string `hcs-XX` (where XX is the assigned standard number).
 - `op` MUST be one of the defined operation values for the target topic type.
-- `token_id` MUST match the Hedera token ID format: three groups of integers separated by periods (e.g., `0.0.12345`).
+- `t_id` MUST match the Hedera token ID format: three groups of integers separated by periods (e.g., `0.0.12345`).
 - `content_hash` MUST be a 64-character lowercase hexadecimal string (SHA-256).
 - `vault_ref` MUST reference a valid HCS-1 topic ID.
 - `m` MUST NOT exceed 500 characters.
