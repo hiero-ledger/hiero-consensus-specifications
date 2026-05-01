@@ -183,7 +183,7 @@ Submitted to the vault topic on initial vault creation.
 | `p` | REQUIRED | Must be `hcs-XX` |
 | `op` | REQUIRED | Must be `create` |
 | `t_id` | REQUIRED | HTS token identifier; must match vault topic memo |
-| `vault_ref` | REQUIRED | HCS-1 topic ID where encrypted context is stored |
+| `t_id` | REQUIRED | HCS-1 topic ID where encrypted context is stored |
 | `content_hash` | REQUIRED | SHA-256 hex digest of the encrypted context blob |
 | `version` | REQUIRED | Protocol version; must be `1.0` for this version |
 | `m` | OPTIONAL | Memo; maximum 500 characters |
