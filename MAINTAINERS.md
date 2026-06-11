@@ -12,10 +12,13 @@ Maintainers are assigned the following scopes in this repository:
 
 ## Active Maintainers
 
-| Name          | GitHub ID      | Scope      | LFID | Discord ID | Email | Company Affiliation |
-| ------------- | -------------- | ---------- | ---- | ---------- | ----- | ------------------- |
+| Name           | GitHub ID      | Scope      | LFID | Discord ID | Email | Company Affiliation |
+| -------------- | -------------- | ---------- | ---- | ---------- | ----- | ------------------- |
 | Michael Kantor | kantorcodes    | Maintainer |      |            |       | Hashgraph Online    |
-| itsbrandondev | itsbrandondev  | Maintainer |      |            |       |                     |
+| itsbrandondev  | itsbrandondev  | Maintainer |      |            |       | Hashgraph           |
+|                | rocketmay      | Maintainer |      |            |       |                     |
+|                | HGraphPunks    | Maintainer |      |            |       | Hashgraph           |
+|                | chelleswf      | Maintainer |      |            |       |                     |
 
 ## Committers (Team Members)
 
