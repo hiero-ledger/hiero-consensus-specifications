@@ -14,11 +14,11 @@ Maintainers are assigned the following scopes in this repository:
 
 | Name           | GitHub ID      | Scope      | LFID | Discord ID | Email | Company Affiliation |
 | -------------- | -------------- | ---------- | ---- | ---------- | ----- | ------------------- |
-| Michael Kantor | kantorcodes    | Maintainer |      |            |       | Hashgraph Online    |
-| itsbrandondev  | itsbrandondev  | Maintainer |      |            |       | hgraph              |
-|                | rocketmay      | Maintainer |      |            |       |                     |
+| Michael Kantor | kantorcodes    | Maintainer |      |            |       | HOL                 |
+| itsbrandondev  | itsbrandondev  | Maintainer |      |            |       | Hgraph              |
+|                | rocketmay      | Maintainer |      |            |       | HashPack            |
 |                | HGraphPunks    | Maintainer |      |            |       | Turtlemoon          |
-|                | chelleswf      | Maintainer |      |            |       |                     |
+|                | chelleswf      | Maintainer |      |            |       | HOL                 |
 
 ## Committers (Team Members)
 
@@ -28,8 +28,8 @@ Members of the `hiero-consensus-specifications-committers` team (non-maintainer)
 | ---------- | ------------ | ----- | ---- | ---------- | ----- | ------------------- |
 | May Chan   | rocketmay    |       |      |            |       | HashPack            |
 | HGraphPunks | hgraphpunks |       |      |            |       | Turtlemoon          |
-| chelleswf  | chelleswf    |       |      |            |       |                     |
-| sentx-dev  | sentx-dev    |       |      |            |       |                     |
+| chelleswf  | chelleswf    |       |      |            |       | HOL                 |
+| sentx-dev  | sentx-dev    |       |      |            |       | SentX               |
 
 ## Emeritus Maintainers
 
