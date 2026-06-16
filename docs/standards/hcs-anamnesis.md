@@ -112,14 +112,14 @@ This standard uses two HCS topic types to manage AI context storage and integrit
 The vault topic MUST be created with the following memo format:
 
 ```
-hcs-XX:vault:{token_id}
+hcs-XX:vault:{vault}
 ```
 
 | Field | Description | Example |
 |-------|-------------|---------|
 | `hcs-XX` | Protocol identifier for this standard | `hcs-XX` |
 | `vault` | Topic type identifier | `vault` |
-| `{token_id}` | HTS token identifier of the ownership token | `0.0.12345` |
+| `{vault}` | HTS token identifier of the ownership token | `0.0.12345` |
 
 Example: `hcs-XX:vault:0.0.12345`
 
@@ -128,14 +128,14 @@ Example: `hcs-XX:vault:0.0.12345`
 The audit topic MUST be created with the following memo format, extending the [HCS-2](./hcs-2.md) indexed registry memo:
 
 ```
-hcs-XX:audit:{token_id}:0:86400
+hcs-XX:audit:{vault}:0:86400
 ```
 
 | Field | Description | Example |
 |-------|-------------|---------|
 | `hcs-XX` | Protocol identifier | `hcs-XX` |
 | `audit` | Topic type identifier | `audit` |
-| `{token_id}` | HTS token identifier of the ownership token | `0.0.12345` |
+| `{vault}` | HTS token identifier of the ownership token | `0.0.12345` |
 | `0` | HCS-2 indexed enum — all messages required to compute state | `0` |
 | `86400` | TTL in seconds (default: one day) | `86400` |
 
@@ -291,13 +291,13 @@ Submitted to the audit topic after each vault operation.
 A vault is referenced using a Hedera Resource Locator (HRL) in the following format:
 
 ```
-hcs://XX/{token_id}
+hcs://XX/{vault}
 ```
 
 Example: `hcs://XX/0.0.12345`
 
 Implementations resolving a vault reference MUST:
-1. Look up the vault topic memo matching `hcs-XX:vault:{token_id}`
+1. Look up the vault topic memo matching `hcs-XX:vault:{vault}`
 2. Retrieve the latest HCS-1 content from the vault topic
 3. Verify the content hash against the most recent audit log entry
 
