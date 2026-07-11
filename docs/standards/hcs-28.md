@@ -8,7 +8,7 @@ sidebar_position: 28
 
 ### Status: Draft
 
-### Version: 0.1
+### Version: 0.2
 
 ### Table of Contents
 
@@ -25,6 +25,7 @@ sidebar_position: 28
   - [Subject Model](#subject-model)
   - [Baseline Signal Semantics](#baseline-signal-semantics)
   - [Scoring Profiles](#scoring-profiles)
+  - [Runtime Security Profile](#runtime-security-profile)
   - [Adapter Contract](#adapter-contract)
   - [Adapter Identifier Namespacing](#adapter-identifier-namespacing)
   - [Contribution Modes](#contribution-modes)
@@ -203,7 +204,19 @@ A scoring profile MUST define:
 - weights and contribution modes; and
 - interpretation rules for missing and stale data.
 
+A scoring profile MAY define `roundingPrecision`; the default is `2` decimal places.
+
 Implementations MAY define additional profiles, but MUST NOT claim baseline interoperability unless the `hcs-28/baseline` profile is supported.
+
+### Runtime Security Profile
+
+HCS-28 defines the optional `hcs-28/runtime-security` profile for security-sensitive skill review. It uses a fixed six-factor denominator covering safety scanning, permission and network exposure, artifact integrity, publisher provenance, instruction quality, and context cost.
+
+Normative profile weights, evidence-binding rules, capability deductions, and testable normalization formulas are defined in:
+
+- [`hcs-28/profiles/runtime-security-v1.md`](./hcs-28/profiles/runtime-security-v1.md)
+
+Implementations claiming `hcs-28/runtime-security` conformance MUST implement that profile exactly and MUST publish its profile version. Metadata completeness, taxonomy, popularity, and repository activity are intentionally excluded from this profile's composite score.
 
 ### Adapter Contract
 
@@ -241,6 +254,8 @@ The `context` object MUST include:
 - `profileVersion` (string), and
 - `includeExternal` (boolean).
 
+The context MAY include `roundingPrecision` as a non-negative integer. If omitted, `roundingPrecision = 2`.
+
 ### Adapter Identifier Namespacing
 
 Adapter identifiers MUST be stable and lowercase. Identifiers SHOULD use dot-separated namespaces to avoid collisions (for example, `metadata.links`).
@@ -252,6 +267,8 @@ The baseline profile reserves the following identifier prefixes:
 - `upvotes`
 - `safety.*`
 - `repository.*`
+
+The `hcs-28/runtime-security` profile reserves `evidence.*`.
 
 Non-baseline adapters SHOULD be namespaced to an organization or implementation to reduce collision risk.
 
@@ -307,7 +324,7 @@ Given raw adapter component map `M`:
 4. Compute composite total as weighted mean of adapter totals:
 
 ```
-total = round2( sum( weight_i * adapterTotal_i ) / sum(weight_i) )
+total = round_p( sum( weight_i * adapterTotal_i ) / sum(weight_i) )
 ```
 
 If the denominator is empty, total MUST be `0`.
@@ -315,7 +332,8 @@ If the denominator is empty, total MUST be `0`.
 #### Definitions
 
 - `clamp(x, 0, 100) = min(100, max(0, x))`
-- `round2(x)` rounds to 2 decimal places using half-up rounding.
+- `p` is the scoring profile's `roundingPrecision` (default `2`).
+- `round_p(x)` rounds to `p` decimal places using half-up rounding.
 
 #### Denominator selection
 
@@ -641,6 +659,8 @@ Implementations MUST version:
 
 Any change to these MUST be treated as a scoring configuration version change.
 
+The `hcs-28/runtime-security` profile is independently versioned. Its initial scoring configuration version is `1.0`.
+
 ## Security Considerations
 
 - External adapters SHOULD enforce bounded timeouts and rate limits.
@@ -661,6 +681,8 @@ An implementation conforms to HCS-28 if it:
 2. Produces clamped `[0,100]` component values and weighted composite totals.
 3. Supports the baseline adapter set defined above (or clearly declares omitted adapters and resulting profile variance).
 4. Exposes an explainable component breakdown with the total score.
+
+An implementation claiming `hcs-28/runtime-security` conformance MUST additionally satisfy the evidence-binding, fixed-denominator, coverage, and output requirements in the runtime security profile.
 
 ## References
 

@@ -2,6 +2,8 @@
 
 This catalog lists the baseline HCS-28 trust adapters. Each adapter maps to one externally reported score and defines normative input/normalization requirements for interoperability.
 
+Optional profile definitions may compose baseline adapters and define additional profile-scoped adapters. See [`../profiles/runtime-security-v1.md`](../profiles/runtime-security-v1.md) for the `hcs-28/runtime-security` profile.
+
 ## Verification adapters
 
 - [verification.review-status](./verification-review-status.md)
