@@ -28,7 +28,7 @@ Implementers (apps, wallets, agents, indexers, and tooling) need a stable, audit
 | [HCS-11](docs/standards/hcs-11.md) | HCS-11: Profile Metadata | Systematic approach for managing profiles on Hiero via account memos, enabling rich identity for individuals and AI agents. |
 | [HCS-12](docs/standards/hcs-12/index.md) | HashLinks — Actions, Blocks, and Assembly | Framework for building interactive experiences on Hiero using WASM actions, UI blocks, and an assembly layer without smart contracts. |
 | [HCS-13](docs/standards/hcs-13.md) | HCS-13: Schema Registry | Standard way to define, register, and reference schemas for validation and interoperability across the Hiero ecosystem. |
-| [HCS-14](docs/standards/hcs-14.md) | HCS-14 - Universal Agent ID Standard | Systematic approach for generating globally unique identifiers for AI agents across web2 and web3 environments. |
+| [HCS-14](docs/standards/hcs-14/index.md) | HCS-14 - Universal Agent ID Standard | Systematic approach for generating globally unique identifiers for AI agents across web2 and web3 environments. |
 | [HCS-15](docs/standards/hcs-15.md) | HCS-15 Standard: Petals - Profile Accounts | Enables account holders to create multiple account instances (petals) that share the same private key while isolating profiles and assets. |
 | [HCS-16](docs/standards/hcs-16.md) | HCS-16 Standard: Floras - AppNet Accounts | Rules and practices for multi-party Flora accounts enabling coordination, shared escrow, and state consensus across agents. |
 | [HCS-17](docs/standards/hcs-17.md) | HCS-17 Standard: State Hash Calculation | Methodology for calculating state hashes of accounts and formations to support auditable, tamper-proof state verification. |
@@ -36,6 +36,9 @@ Implementers (apps, wallets, agents, indexers, and tooling) need a stable, audit
 | [HCS-19](docs/standards/hcs-19.md) | HCS‑19 Standard: AI Agent Privacy Compliance | ISO/IEC TS 27560-aligned framework for AI agents to document and manage privacy compliance on Hiero via HCS topics (consent, processing records, rights fulfilment). |
 | [HCS-20](docs/standards/hcs-20/index.md) | HCS-20 Standard: Auditable Points Standard on Hiero | Defines how points can be managed and audited on Hiero using HCS topics, inspired by BRC-20 and extended for auditable points and inscriptions. |
 | [HCS-21](docs/standards/hcs-21.md) | HCS-21 Standard: Adapter Registry | Platform-agnostic adapter registry packaging decentralized adapters, manifests, and consensus context for distributed appnets (Floras). |
+| [HCS-25](docs/standards/hcs-25.md) | HCS-25 Standard: AI Trust Score Methodology | Platform-agnostic methodology for converting trust signals into normalized components and computing a composite AI Trust Score. |
+| [HCS-26](docs/standards/hcs-26.md) | HCS-26 Standard: Decentralized Agent Skills Registry | Standard for registering versioned agent skills on HCS using HCS-2 registries and HCS-1 manifests. |
+| [HCS-27](docs/standards/hcs-27/index.md) | HCS-27 Standard: ANS Transparency Log Checkpoints | Defines a standard HCS message for publishing Merkle tree root checkpoints that commit to an append-only ANS transparency log. |
 | [HCS-XX](docs/standards/hcs-XX.md) | HCS-XX — Template | Template for drafting a new specification that conforms to HCS-4 requirements. |
 
 Full index: `docs/standards/index.mdx`
