@@ -15,26 +15,26 @@ Stored in `subject.metadata.ansTrustDiscovery`:
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `ans-trust-discovery.certtype` | number \| null | Certificate type strength (DV=40, OV=70, EV=100) |
-| `ans-trust-discovery.dnssecurity` | number \| null | DNSSEC validation (0 or 100) |
-| `ans-trust-discovery.agentage` | number \| null | Registration age (logarithmic, 0-100) |
-| `ans-trust-discovery.versionstability` | number \| null | Version churn rate (inverse, 0-100) |
-| `ans-trust-discovery.dnsconsistency` | number \| null | Cross-resolver DNS agreement (0-100) |
+| `ans-trust-discovery.certtype` | number \| null | Certificate type strength (higher for OV/EV vs DV) |
+| `ans-trust-discovery.dnssecurity` | number \| null | DNS security posture (DNSSEC, TLSA, related records) |
+| `ans-trust-discovery.agentage` | number \| null | Time since initial registration |
+| `ans-trust-discovery.versionstability` | number \| null | Version change frequency (less churn = higher score) |
+| `ans-trust-discovery.dnsconsistency` | number \| null | DNS record consistency and attestation match |
 | `ans-trust-discovery.httpsrecord` | number \| null | HTTPS DNS record presence (0 or 100) |
 | `ans-trust-discovery.agentcard` | number \| null | agent-card.json reachable (0 or 100) |
-| `ans-trust-discovery.certificatehygiene` | number \| null | Certificate health (starts at 100, deducts for issues) |
+| `ans-trust-discovery.certificatehygiene` | number \| null | Certificate health (expiry, consistency, rotation) |
 | `ansTrustDiscoveryStatus` | `ok` \| `missing` \| `error` \| `stale` | Overall collection status |
 | `ansTrustDiscoveryUpdatedAt` | ISO timestamp | Refresh time |
 
-Per-signal status is conveyed via null (missing) vs numeric (ok). Signals measure publicly observable infrastructure state (DNS, TLS, HTTPS records) verified from multiple resolvers.
+Per-signal status is conveyed via null (missing) vs numeric (ok). All numeric values are in `[0,100]`. Signals measure publicly observable infrastructure state (DNS, TLS, HTTPS records).
 
 ## Notes
 
 - Signals refresh every 24 hours; infrastructure state is slowly-changing.
-- Certificate type is anchored to CA-issued certificates (DV/OV/EV) — cannot be self-asserted.
-- Agent age is immutable once established.
+- Certificate type scores are anchored to CA-issued certificates — cannot be self-asserted.
+- Registration timestamps cannot be backdated; agent age can only grow organically.
 - Registration records are anchored in an HCS-27 Merkle-tree transparency log, providing tamper evidence.
-- The reference provider verifies DNS from multiple geographically distributed resolvers.
+- Scoring methodology is configurable by the provider; specific formulas may evolve independently of this signal schema.
 
 ## Production example (Registry Broker; informative)
 
