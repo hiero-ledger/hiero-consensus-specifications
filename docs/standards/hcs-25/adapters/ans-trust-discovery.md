@@ -76,7 +76,7 @@ Minimum threshold: at least 4 of 8 components must be non-missing for the adapte
 | Adapter | What it measures | Signal source | Temporal scope |
 | --- | --- | --- | --- |
 | `availability` | Is the agent reachable? | Active probe | Current |
-| `ethos` | Social reputation | Third-party platform | Retrospective |
+| `ethos` | Credibility contribution | Third-party platform | Retrospective |
 | `output-verification` | Is THIS output correct? | Verification provider | Per-decision |
 | `oss-popularity` | Community adoption | GitHub/npm | Retrospective |
 | **`ans-trust-discovery`** | **Infrastructure identity & integrity** | **ANS Trust Index** | **Current (24h refresh)** |
@@ -90,6 +90,10 @@ Key differentiator: `ans-trust-discovery` is the only adapter that measures **id
 - **Binary signal gaming**: Binary signals (dnssecurity, httpsrecord, agentcard) can be trivially satisfied by enabling the feature. This is intentional — the signal measures compliance with operational best practice, not difficulty of achievement.
 - **Certificate type anchoring**: Certificate type scores are anchored to CA-issued certificates (DV/OV/EV). Self-signed certificates do not contribute a certtype score, preventing self-assertion of identity strength.
 - **Transparency log verification**: Implementations SHOULD verify HCS-27 Merkle inclusion proofs for registration records when available. This provides tamper evidence independent of the ANS provider.
+
+## Multi-provider support
+
+Not applicable. ANS Trust Discovery signals are structurally tied to a single ANS registry operator — the registry that issued the agent's certificate and manages its DNS records. Independent verification is provided through HCS-27 transparency log proofs rather than through multi-provider aggregation.
 
 ## Reference implementations (informative)
 
