@@ -9,6 +9,118 @@ Collect infrastructure trust signals from the Agent Name Service (ANS) Trust Ind
 - Applied to agents registered with `registry=ans` in their UAID (see HCS-14 `ans-dns-web` profile).
 - Excludes agents in other registries (signals are structurally unavailable from the ANS Trust Index).
 
+## Collection method
+
+Signal adapters query an ANS Trust Index provider's agent detail endpoint.
+
+### Reference endpoint format
+
+```
+GET {ans_base_url}/v1/ans/registered-agents/{agent_id}
+```
+
+Where `{agent_id}` is the agent identifier known to the ANS provider.
+
+### Example response (signals portion)
+
+```json
+{
+  "signals": {
+    "certtype": {
+      "score": 100,
+      "missing": false,
+      "computedAt": "2026-08-18T01:58:17.623Z",
+      "pillar": "identity",
+      "evidence": {
+        "certType": "EV",
+        "issuer": "DigiCert EV RSA CA G2"
+      }
+    },
+    "dnssecurity": {
+      "score": 80,
+      "missing": false,
+      "computedAt": "2026-08-18T01:58:17.623Z",
+      "pillar": "identity",
+      "evidence": {
+        "dnssecValid": true,
+        "tlsaPresent": true,
+        "raBadgePresent": false
+      }
+    },
+    "agentage": {
+      "score": 60,
+      "missing": false,
+      "computedAt": "2026-08-18T01:58:17.623Z",
+      "pillar": "integrity",
+      "evidence": {
+        "registeredAt": "2026-03-01T00:00:00Z",
+        "ageDays": 170
+      }
+    },
+    "versionstability": {
+      "score": 100,
+      "missing": false,
+      "computedAt": "2026-08-18T01:58:17.623Z",
+      "pillar": "integrity",
+      "evidence": {
+        "versionChanges": 1,
+        "observationWindowDays": 90
+      }
+    },
+    "dnsconsistency": {
+      "score": 70,
+      "missing": false,
+      "computedAt": "2026-08-18T01:58:17.623Z",
+      "pillar": "integrity",
+      "evidence": {
+        "ansMatchVerified": true,
+        "raBadgeMatchVerified": false,
+        "domainResolved": true
+      }
+    },
+    "httpsrecord": {
+      "score": 100,
+      "missing": false,
+      "computedAt": "2026-08-18T01:58:17.623Z",
+      "pillar": "integrity",
+      "evidence": {
+        "httpsRecordPresent": true
+      }
+    },
+    "agentcard": {
+      "score": 100,
+      "missing": false,
+      "computedAt": "2026-08-18T01:58:17.623Z",
+      "pillar": "metadata",
+      "evidence": {
+        "cardPresent": true,
+        "source": "well-known"
+      }
+    },
+    "certificatehygiene": {
+      "score": 95,
+      "missing": false,
+      "computedAt": "2026-08-18T01:58:17.623Z",
+      "pillar": "integrity",
+      "evidence": {
+        "daysToExpiry": 245,
+        "serverCertStatus": "matched"
+      }
+    }
+  }
+}
+```
+
+Each signal returns a `score` in `[0,100]`, a `missing` flag, a `computedAt` timestamp, a `pillar` categorization, and an `evidence` object with signal-specific observation data. When `missing` is `true`, the signal could not be computed and `score` should be treated as null. The `evidence` field contents are illustrative; actual keys vary by signal and may evolve.
+
+### Providers
+
+| Provider | Base URL | Scope |
+| --- | --- | --- |
+| GoDaddy ANS | `https://api.godaddy.com` | ANS-registered agents |
+
+_Additional providers will be listed as they implement the signal schema._
+
 ## Stored fields (example schema)
 
 Stored in `subject.metadata.ansTrustDiscovery`:
@@ -22,7 +134,7 @@ Stored in `subject.metadata.ansTrustDiscovery`:
 | `ans-trust-discovery.dnsconsistency` | number \| null | DNS record consistency and attestation match |
 | `ans-trust-discovery.httpsrecord` | number \| null | HTTPS DNS record presence (0 or 100) |
 | `ans-trust-discovery.agentcard` | number \| null | agent-card.json reachable (0 or 100) |
-| `ans-trust-discovery.certificatehygiene` | number \| null | Certificate health (expiry, consistency, rotation) |
+| `ans-trust-discovery.certificatehygiene` | number \| null | Certificate health (expiry, completeness, consistency, rotation) |
 | `ansTrustDiscoveryStatus` | `ok` \| `missing` \| `error` \| `stale` | Overall collection status |
 | `ansTrustDiscoveryUpdatedAt` | ISO timestamp | Refresh time |
 
