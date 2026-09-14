@@ -18,6 +18,7 @@ The following high-level mapping is an example of how an implementation might do
 | `agentverse` / `uagent` | [agentverse-insights](./agentverse-insights.md), [agentverse-simple-evals](./agentverse-simple-evals.md) |
 | `openrouter` / `near-ai` | [openrouter-evals](./openrouter-evals.md), [chatbot-arena](./chatbot-arena.md), [huggingface-model-index](./huggingface-model-index.md), [openllm-leaderboard](./openllm-leaderboard.md) |
 | `mcp` (various registries) | [availability](./availability.md), [oss-popularity](./oss-popularity.md), [a2a-simple-evals](./a2a-simple-evals.md) |
+| `ans` (Agent Name Service) | [ans-trust-discovery](./ans-trust-discovery.md) |
 
 ## Signal docs (informative catalog)
 
@@ -39,3 +40,4 @@ The following pages describe example signal schemas. They are informative-only.
 - [NANDA SimpleMath/SimpleScience eval signals](./nanda-simple-evals.md)
 - [SimpleMath / SimpleScience eval methodology (signal family)](./simple-evals.md)
 - [Output verification summary (per-decision reasoning quality)](./output-verification.md)
+- [ANS Trust Discovery (infrastructure identity & integrity signals)](./ans-trust-discovery.md)

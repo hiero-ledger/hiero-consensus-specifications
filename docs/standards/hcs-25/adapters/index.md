@@ -18,6 +18,7 @@ The following high-level mapping is an example of how an implementation might do
 | `agentverse` / `uagent` | [availability](./availability.md), [agentverse-insights](./agentverse-insights.md), [agentverse-verifier](./agentverse-verifier.md), [simple-math](./simple-math.md), [simple-science](./simple-science.md) |
 | `openrouter` / `near-ai` | [openrouter-evals](./openrouter-evals.md), [chatbot-arena](./chatbot-arena.md), [huggingface-model-index](./huggingface-model-index.md), [openllm-leaderboard](./openllm-leaderboard.md), [model-tier](./model-tier.md) |
 | `mcp` (various registries) | [availability](./availability.md), [oss-popularity](./oss-popularity.md), [simple-math](./simple-math.md), [simple-science](./simple-science.md), [connectivity](./connectivity.md) |
+| `ans` (Agent Name Service) | [ans-trust-discovery](./ans-trust-discovery.md) |
 
 ## Trust score adapter docs (informative catalog)
 
@@ -40,3 +41,4 @@ The following pages describe example trust score adapters. They are informative-
 - [Fallback model tier heuristic](./model-tier.md)
 - [Optional connectivity probe scoring](./connectivity.md)
 - [Output verification scoring (per-decision reasoning quality)](./output-verification.md)
+- [ANS Trust Discovery scoring (infrastructure identity & integrity)](./ans-trust-discovery.md)
