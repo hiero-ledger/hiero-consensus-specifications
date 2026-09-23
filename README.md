@@ -64,7 +64,7 @@ Editors and maintainers are listed in `MAINTAINERS.md`. CODEOWNERS are defined i
 
 ## Code of Conduct
 
-This project is governed by the Contributor Covenant Code of Conduct. By participating, you are expected to uphold this code of conduct.
+Hiero uses the Linux Foundation Decentralised Trust [Code of Conduct](https://www.lfdecentralizedtrust.org/code-of-conduct).
 
 ## License
 
