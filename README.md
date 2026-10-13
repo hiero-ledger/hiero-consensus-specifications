@@ -1,6 +1,6 @@
 # Hiero Consensus Specifications
 
-| ![](./Hashgraph-Online.png) | Canonical, text-first specifications for **Hiero Consensus Standards (HCS)**, originally created and maintained by [Hashgraph Online](https://hol.org).<br><br>Reference implementations: [Standards SDK](https://hol.org/docs/libraries/standards-sdk/overview)<br><br>Process and governance are defined in `docs/standards/hcs-4.md`. |
+| ![](./Hashgraph-Online.png) | Canonical, text-first specifications for **Hiero Consensus Specifications (HCS)**, originally created and maintained by [Hashgraph Online](https://hol.org).<br><br>Reference implementations: [Standards SDK](https://hol.org/docs/libraries/standards-sdk/overview)<br><br>Process and governance are defined in `docs/standards/hcs-4.md`. |
 | :-- | :-- |
 
 ## Abstract
