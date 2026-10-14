@@ -1,0 +1,18 @@
+{
+  "id": "sha256:7c6fffd0bdf4214cea1abb0e0971e738fde9d222e7bd4c37f0687ee131751ea4",
+  "nodes": [
+    {
+      "name": "governed",
+      "operator": "gate",
+      "inputs": [
+        "adapter:quality",
+        "component:corroboration.sources"
+      ],
+      "parameters": {
+        "below": 50,
+        "cap": 70
+      }
+    }
+  ],
+  "output": "governed"
+}
