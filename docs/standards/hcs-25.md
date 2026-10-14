@@ -551,7 +551,7 @@ Implementations SHOULD preserve the ability to recompute historical trust scores
 [Composite AI Trust Score](#composite-ai-trust-score) defines exactly one way to combine
 adapter totals: a weighted mean. That is sufficient to express *how much* a dimension
 matters, but not *whether a dimension governs* — a policy such as "if a safety dimension
-falls below a floor, cap the composite regardless of the other dimensions" cannot be
+falls below a threshold, cap the composite regardless of the other dimensions" cannot be
 written as a coefficient.
 
 This section defines an OPTIONAL **composition graph** that expresses such policies as
@@ -610,24 +610,37 @@ Every operator MUST be deterministic, MUST depend only on its inputs and declare
 parameters, and MUST return a value in `[0,100]` rounded per
 [Score Range and Rounding](#score-range-and-rounding).
 
-Let `V = [v₁ … vₙ]` be the values of a node's **available** inputs, in declaration order.
+Let a node's **declared** inputs be `I = [i₁ … iₘ]` in declaration order, and let `A ⊆ I`
+be those that are **available** (see
+[Availability and Status Propagation](#availability-and-status-propagation)), preserving
+declaration order. `vⱼ` is the value of input `iⱼ`.
 
 | Operator | Parameters | Result |
 | --- | --- | --- |
-| `weightedMean` | `weights` `[w₁ … wₙ]`, `wᵢ ≥ 0` | `Σ(vᵢ · wᵢ) / Σwᵢ` |
-| `mean` | — | `Σvᵢ / n` |
-| `min` | — | `min(V)` |
-| `max` | — | `max(V)` |
-| `median` | — | middle value of sorted `V`; mean of the two middle values when `n` is even |
-| `floor` | — | `min(v₁, v₂)`, where `v₁` is the primary input and `v₂` the floor |
-| `gate` | `below`, `cap` | `v₂ < below ? min(v₁, cap) : v₁`, where `v₁` is the primary input and `v₂` the condition |
+| `weightedMean` | `weights` `[w₁ … wₘ]`, `wⱼ ≥ 0` | `Σ_{iⱼ ∈ A}(vⱼ · wⱼ) / Σ_{iⱼ ∈ A} wⱼ` |
+| `mean` | — | arithmetic mean of `{vⱼ : iⱼ ∈ A}` |
+| `min` | — | smallest value in `A` |
+| `max` | — | largest value in `A` |
+| `median` | — | middle value of the sorted values in `A`; mean of the two middle values when `\|A\|` is even |
+| `cap` | — | `min(v₁, v₂)` — the primary input `i₁` limited so it does not exceed the limiting input `i₂` |
+| `gate` | `below`, `cap` | `v₂ < below ? min(v₁, cap) : v₁`, where `i₁` is the primary input and `i₂` the condition |
 | `constant` | `value` | `value` |
 
-For `weightedMean`, if `Σwᵢ = 0` the node is **unavailable**.
+**Weights bind to declared inputs.** For `weightedMean`, `weights` MUST have exactly `m`
+entries — one per *declared* input — and `wⱼ` MUST remain bound to `iⱼ` regardless of which
+inputs are available. Implementations MUST NOT re-index weights against the available-input
+list; doing so would silently apply one input's weight to another. A `weights` list whose
+length differs from the declared input count MUST be rejected as a configuration error. If
+`Σ_{iⱼ ∈ A} wⱼ = 0` the node is **unavailable**.
 
-`floor` and `gate` are ordered, two-input operators: the first input is the primary value
-being governed, the second is the floor or condition. Implementations MUST NOT reorder
-their inputs.
+`cap` imposes an **upper** bound: it limits the primary input to the limiting input's value.
+It is not a lower bound — `cap(20, 60) = 20`, not `60`. A lower bound is expressed with
+`max`. `gate` is the conditional form of the same idea: it caps the primary input at the
+constant `cap`, but only when the condition input falls below `below`.
+
+`cap` and `gate` are ordered, two-input operators: the first input is the primary value
+being governed, the second is the limiting or condition input. Implementations MUST NOT
+reorder their inputs.
 
 Implementations MAY define additional operators. Any additional operator MUST satisfy the
 determinism and range requirements above, and MUST be declared in the published
@@ -643,11 +656,20 @@ consistent with [Missing and Stale Data](#missing-and-stale-data).
    to `0`.
 2. For `min`, `max`, `mean`, `median` and `weightedMean`, if every input is unavailable
    the node is unavailable.
-3. For `floor` and `gate`, if the primary input is unavailable the node is unavailable.
-   If the floor or condition input is unavailable, the node's value MUST be the primary
-   input unchanged, and the node MUST be reported as having applied no constraint. A
-   missing safety signal MUST NOT silently impose a cap, and MUST NOT silently remove one.
-4. A node's status MUST be the most severe status among its contributing inputs, using the
+3. For `cap` and `gate`, if the primary input is unavailable the node is unavailable.
+4. For `cap` and `gate`, the limiting or condition input MUST have status `ok` or `stale`
+   for a constraint to be applied. If its status is `missing`, `timeout`, or `error`, the
+   node's value MUST be the primary input unchanged, and the node MUST be reported as
+   having applied no constraint.
+
+   This applies whether the input was omitted as unavailable **or** carries a deterministic
+   `0` produced by its adapter's contribution mode (see
+   [Contribution Modes](#contribution-modes) and
+   [Missing and Stale Data](#missing-and-stale-data)). A `0` that stands for "not measured"
+   is not a measured limit of zero: reading it as one would clamp the composite to `0`
+   precisely when the governing signal failed to arrive. A missing safety signal MUST NOT
+   silently impose a cap, and MUST NOT silently remove one.
+5. A node's status MUST be the most severe status among its contributing inputs, using the
    codes in [Signal Status Codes](#signal-status-codes) and the ordering
    `ok` < `stale` < {`missing`, `timeout`, `error`}.
 
@@ -877,7 +899,7 @@ the denominator adapters reproduces [Composite AI Trust Score](#composite-ai-tru
 exactly, as required by
 [Reproduction of the composite](#reproduction-of-the-composite-normative).
 
-### Test Vector 4: Safety Floor (a Dimension Governs Rather Than Dilutes)
+### Test Vector 4: Safety Cap (a Dimension Governs Rather Than Dilutes)
 
 **Configuration (C):** four adapters, `contributionMode: scoped`, all `weight = 1`:
 `availability`, `performance`, `reputation`, `sybil-resistance`.
@@ -895,7 +917,7 @@ trustScore = (90 + 80 + 61 + 24) / 4 = 63.75
 
 - node `quality`: `weightedMean`, inputs `adapter:availability`, `adapter:performance`,
   `adapter:reputation`, weights `[1, 1, 1]`
-- node `governed`: `floor`, inputs `node:quality`, `adapter:sybil-resistance`
+- node `governed`: `cap`, inputs `node:quality`, `adapter:sybil-resistance`
 - output: `governed`
 
 ```
@@ -906,7 +928,7 @@ value(governed) = min(77, 24)        = 24
 `trustScores.total = 24`.
 
 The contrast is the point. As a fourth term in the mean, a weak Sybil-resistance signal
-moves the score from `77` to `63.75`. As a floor, it governs: the composite cannot exceed
+moves the score from `77` to `63.75`. As a cap, it governs: the composite cannot exceed
 the dimension the configuration declares to be limiting.
 
 ### Test Vector 5: Gate With a Stale, Then Unavailable, Condition
@@ -946,7 +968,27 @@ unavailable.
 value(governed) = 90   (primary passes through; no constraint applied)
 ```
 
-A missing safety signal neither imposes nor removes a cap.
+**Case (c) — condition is a deterministic `0` from missingness.** `corroboration` instead
+uses `contributionMode: scoped` and its signal times out. Per
+[Missing and Stale Data](#missing-and-stale-data) the component value is `0` with status
+`timeout`, and the adapter remains in the denominator, so `total(corroboration) = 0`.
+
+Without a composition graph: `trustScore = (90 + 0) / 2 = 45`.
+
+```
+condition = 0, status timeout
+→ value(governed) = 90   (primary passes through; no constraint applied)
+```
+
+The condition is numerically `0`, which is below `below = 50`, but that `0` stands for "not
+measured" rather than a measured absence of corroboration. Applying the cap here would
+yield `70` — and under a `cap` node limiting by this adapter directly, `min(90, 0) = 0` —
+on the basis of a signal that never arrived. Per rule 4 of
+[Availability and Status Propagation](#availability-and-status-propagation), a limiting or
+condition input whose status is `missing`, `timeout`, or `error` imposes no constraint.
+
+In all three cases a missing safety signal neither imposes nor removes a cap, and the
+node's status records why.
 
 ## Conformance
 
@@ -1042,6 +1084,13 @@ Next: Optionally expand the signal catalog with more ecosystem-specific signal s
 | ------- | --------- | ----------- |
 | 1.1     | (pending) | Added the OPTIONAL [Composition Graph](#composition-graph-optional): operator catalog, acyclic graph model, availability and status propagation, deterministic evaluation order, and a normative requirement that a one-node `weightedMean` composition graph reproduce the existing composite. Added the OPTIONAL [Score Explanation](#score-explanation-optional). Added Test Vectors 3–5. Updated the Architecture Overview and Composite-score-at-a-glance diagrams to show composition graph as an optional path beside the default weighted mean. Additive only: a configuration that defines no composition graph is evaluated exactly as in 1.0, and support for both sections is OPTIONAL. |
 | 1.0     | —         | Initial draft. |
+
+Review feedback incorporated before merge: the `floor` operator was renamed `cap` (it
+imposes an upper bound — `min()` caps rather than floors); `weightedMean` weights were
+made explicitly bound to *declared* inputs so they cannot slide onto a different input when
+one is unavailable; and a limiting or condition input whose status is `missing`, `timeout`
+or `error` now imposes no constraint, so a deterministic `0` standing for "not measured" can
+no longer clamp a composite to zero (Test Vector 5, case (c)).
 
 ## License
 
