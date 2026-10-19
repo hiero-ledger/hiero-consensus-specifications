@@ -6,18 +6,16 @@ sidebar_position: 14
 
 # HCS-14 Standard: Universal Agent ID Standard
 
-### Status: Draft
+### Status: Published
 
 Discussion: https://github.com/hashgraph-online/hcs-improvement-proposals/discussions/135
 
 Discussions-To: https://github.com/hashgraph-online/hcs-improvement-proposals/discussions/135
 
-Last-Call-Ends: (TBD)
-
 ### Table of Contents
 
 - [HCS-14 Standard: Universal Agent ID Standard](#hcs-14-standard-universal-agent-id-standard)
-    - [Status: Draft](#status-draft)
+    - [Status: Published](#status-published)
     - [Table of Contents](#table-of-contents)
   - [Authors](#authors)
   - [Abstract](#abstract)
