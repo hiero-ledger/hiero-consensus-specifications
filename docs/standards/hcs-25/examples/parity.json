@@ -1,0 +1,26 @@
+{
+  "id": "sha256:76218d4122ea6c5e94005cc0087ea50f82526760ee89fd798e9fbad9bc669c98",
+  "metadata": {
+    "title": "Parity with the default composite",
+    "description": "A single weighted mean over all eligible adapter totals, which reproduces the HCS-25 v1.0 composite exactly."
+  },
+  "nodes": [
+    {
+      "name": "all",
+      "operator": "weightedMean",
+      "inputs": [
+        "adapter:availability",
+        "adapter:simple-evals",
+        "adapter:reputation"
+      ],
+      "parameters": {
+        "weights": [
+          1,
+          2,
+          1
+        ]
+      }
+    }
+  ],
+  "output": "all"
+}

@@ -1,0 +1,39 @@
+{
+  "id": "sha256:2a01de555c5ee98a7af2cf41726dc91dd0a418c21c4d852e0f806fb6a2e43fc8",
+  "metadata": {
+    "title": "Constant floor",
+    "description": "A genuine lower bound: the averaged quality is raised to at least 40 by taking the maximum against a constant node."
+  },
+  "nodes": [
+    {
+      "name": "minimum",
+      "operator": "constant",
+      "parameters": {
+        "value": 40
+      }
+    },
+    {
+      "name": "quality",
+      "operator": "weightedMean",
+      "inputs": [
+        "adapter:availability",
+        "adapter:reputation"
+      ],
+      "parameters": {
+        "weights": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "name": "floored",
+      "operator": "max",
+      "inputs": [
+        "node:quality",
+        "node:minimum"
+      ]
+    }
+  ],
+  "output": "floored"
+}
