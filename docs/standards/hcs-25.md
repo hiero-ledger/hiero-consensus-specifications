@@ -590,7 +590,11 @@ configuration is stored or transported.
 
 ```json
 {
-  "id": "sha256:9f2c1ab4e7d05836a1c4e2fb77a90d3e5c81b6f4a2093de7cc15b840e6a37f21",
+  "id": "sha256:ba1d6f33f1087bced364cc111f8792103ef5a83c63215f5e8f4492dc7ee5e876",
+  "metadata": {
+    "title": "Safety cap",
+    "description": "Quality dimensions are averaged, then limited by sybil resistance so a weak safety dimension governs the score rather than being diluted by it."
+  },
   "nodes": [
     {
       "name": "quality",
@@ -615,6 +619,7 @@ configuration is stored or transported.
 | `id` | string | REQUIRED | Stable graph identifier. See [Graph Identity](#graph-identity). |
 | `nodes` | array of [Node object](#node-object) | REQUIRED | At least one node. Node names MUST be unique. |
 | `output` | string | REQUIRED | The `name` of the node whose value becomes the composed score. |
+| `metadata` | object | OPTIONAL | Human-readable labels. See [Metadata](#metadata). |
 
 ##### Node object
 
@@ -624,9 +629,30 @@ configuration is stored or transported.
 | `operator` | string | REQUIRED | A core operator from the [Operator Catalog](#operator-catalog), or an extension operator identifier. |
 | `inputs` | array of string | REQUIRED | Ordered [input references](#input-references). Order is significant and MUST be preserved. MUST be absent or empty for `constant`. |
 | `parameters` | object | CONDITIONAL | REQUIRED when the operator declares parameters; MUST be absent or empty otherwise. |
+| `metadata` | object | OPTIONAL | Human-readable labels. See [Metadata](#metadata). |
 
 `nodes` is an array rather than a name-keyed object so that duplicate node names are
 detectable rather than resolved by serializer behaviour.
+
+##### Metadata
+
+A graph, and any node within it, MAY carry a `metadata` object holding human-readable
+labels. It is informative: implementations MUST NOT let its contents affect evaluation.
+
+| Field | Type | Requiredness | Description |
+| --- | --- | --- | --- |
+| `title` | string | OPTIONAL | Short name for display, such as `"Safety cap"`. |
+| `description` | string | OPTIONAL | What the graph or node does, and why, in prose. |
+
+Members of `metadata` that an implementation does not recognize MUST be ignored rather
+than rejected, so that descriptive conventions can be added without invalidating graphs
+that already exist. This is the one exception to [Validation](#validation) rule 10.
+
+`metadata` is excluded from the [canonical form](#canonical-form). Correcting a title or
+translating a description therefore does not change the graph's identifier, and two graphs
+that compute identically remain recognizable as the same policy whatever they are called.
+The consequence is that `metadata` is not covered by the identifier: a consumer MUST NOT
+rely on it to establish what a graph computes, and MUST read the nodes for that.
 
 ##### Operator parameters
 
@@ -795,8 +821,8 @@ to [Composite AI Trust Score](#composite-ai-trust-score) in place of a graph it 
 rejecting the configuration and silently scoring under different semantics are not the same
 outcome.
 
-1. **Missing or malformed required field** — any REQUIRED field absent, or of the wrong
-   type.
+1. **Missing or malformed required field** — any REQUIRED field absent, or any field
+   present with a value of the wrong type.
 2. **Duplicate node name**, or a `name` that does not match the required pattern.
 3. **Unknown output** — `output` does not name a node in `nodes`.
 4. **Unresolvable reference** — an input references an adapter, component, or node that the
@@ -813,9 +839,10 @@ outcome.
    required arity.
 10. **Unrecognized field** — a field not defined by this section. Implementations MUST
     reject unrecognized fields, except fields whose names carry a namespace prefix
-    containing a `.` (for example `com.example.hint`), which MUST be ignored. This keeps
-    vendor annotations possible without allowing a typo in a normative field name to pass
-    silently.
+    containing a `.` (for example `com.example.hint`), which MUST be ignored, and members
+    of a [`metadata`](#metadata) object, which MUST be ignored. This keeps vendor
+    annotations and descriptive labels possible without allowing a typo in a normative
+    field name to pass silently.
 
 Implementations MAY additionally reject a graph that exceeds implementation-defined bounds
 on node count or graph depth; see [Security Considerations](#security-considerations).
@@ -839,6 +866,8 @@ The canonical form of a composition graph is its JSON serialization with:
 
 - object keys sorted by Unicode code point, at every level;
 - the `id` field omitted, so that the identifier does not depend on itself;
+- every `metadata` object omitted, at the graph and at every node, so that human-readable
+  labels never change the identifier;
 - arrays — `nodes`, `inputs`, `weights` — in their declared order, which is significant;
 - no insignificant whitespace; and
 - numbers in their shortest round-trippable decimal form.
@@ -1280,7 +1309,10 @@ one is unavailable; a limiting or condition input whose status is `missing`, `ti
 no longer clamp a composite to zero (Test Vector 5, case (c)); the composition-graph
 representation was made normative with a field-definition table, per-operator parameter
 types, a [Validation](#validation) section and a [Graph Identity](#graph-identity) section
-defining a canonical form and content-derived identifier; extension operators now require
+defining a canonical form and content-derived identifier; an OPTIONAL
+[`metadata`](#metadata) object carrying `title` and `description` was added at the graph and
+node level, excluded from the canonical form so that labels never change a graph's
+identifier; extension operators now require
 namespaced, versioned identifiers; an implementation that does not support composition
 graphs MUST reject a configuration containing one rather than silently scoring under the
 default aggregation; and worked graphs were added under
@@ -1290,7 +1322,9 @@ Editorial, required by the new validation rules: Test Vector 1 used `simple_eval
 adapter identifier, which [Adapter Identifier Namespacing](#adapter-identifier-namespacing)
 does not permit. Since [Validation](#validation) now requires every input reference to match
 that pattern, the vector contradicted the document. Corrected to `simple-evals`; no computed
-value changes.
+value changes. The identifier on the illustrative graph in
+[Graph Configuration](#graph-configuration) was a placeholder that did not match its own
+canonical form; it now carries the digest that graph actually derives.
 
 ## License
 

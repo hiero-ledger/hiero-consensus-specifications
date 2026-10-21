@@ -1,5 +1,9 @@
 {
   "id": "sha256:ba1d6f33f1087bced364cc111f8792103ef5a83c63215f5e8f4492dc7ee5e876",
+  "metadata": {
+    "title": "Safety cap",
+    "description": "Quality dimensions are averaged, then limited by sybil resistance so a weak safety dimension governs the score rather than being diluted by it."
+  },
   "nodes": [
     {
       "name": "quality",

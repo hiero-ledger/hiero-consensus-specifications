@@ -9,6 +9,10 @@ specified in [§ Graph Identity](../../hcs-25.md#graph-identity) — the SHA-256
 graph's canonical form with `id` omitted. Recomputing the identifier from any of these files
 MUST reproduce the value it carries.
 
+Each file also carries a [`metadata`](../../hcs-25.md#metadata) object with a `title` and a
+`description`. That object is informative and is excluded from the canonical form, so the
+labels can be corrected or translated without changing the graph's identifier.
+
 | Example | Demonstrates | Spec reference |
 | --- | --- | --- |
 | [`parity.json`](./parity.json) | A single `weightedMean` node reproducing the v1.0 composite exactly | [Test Vector 3](../../hcs-25.md#test-vector-3-a-composition-graph-reproduces-the-composite-parity) |
@@ -31,6 +35,7 @@ MUST reproduce the value it carries.
 | `corroboration-gate.json` | `sha256:7c6fffd0bdf4214cea1abb0e0971e738fde9d222e7bd4c37f0687ee131751ea4` |
 | `constant-floor.json` | `sha256:2a01de555c5ee98a7af2cf41726dc91dd0a418c21c4d852e0f806fb6a2e43fc8` |
 
-These are stable: the canonical form sorts object keys and omits `id`, so reformatting a
-file — reindenting it, reordering its keys — does not change its identifier, while changing
-an operator, an input, or a parameter does.
+These are stable: the canonical form sorts object keys and omits both `id` and every
+`metadata` object, so reformatting a file — reindenting it, reordering its keys — or
+rewording a title does not change its identifier, while changing an operator, an input, or
+a parameter does.
